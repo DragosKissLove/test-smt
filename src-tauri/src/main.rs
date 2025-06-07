@@ -483,17 +483,147 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
 
             Ok("Printing services enabled successfully".to_string())
         },
-        // Placeholder functions for other features
+        "disable_bluetooth" => {
+            let commands = vec![
+                "sc config BluetoothUserService start= disabled",
+                "sc config BTAGService start= disabled",
+                "sc config BthA2dp start= disabled",
+                "sc config BthAvctpSvc start= disabled",
+                "sc config BthEnum start= disabled",
+                "sc config BthHFEnum start= disabled",
+                "sc config BthLEEnum start= disabled",
+                "sc config BthMini start= disabled",
+                "sc config BTHMODEM start= disabled",
+                "sc config BTHPORT start= disabled",
+                "sc config bthserv start= disabled",
+                "sc config BTHUSB start= disabled",
+                "sc config HidBth start= disabled",
+                "sc config Microsoft_Bluetooth_AvrcpTransport start= disabled",
+                "sc config RFCOMM start= disabled",
+                "reg add \"HKLM\\SOFTWARE\\Microsoft\\PolicyManager\\default\\Connectivity\\AllowBluetooth\" /v \"value\" /t REG_DWORD /d \"0\" /f"
+            ];
+
+            for cmd in commands {
+                Command::new("cmd").args(&["/C", cmd]).output().ok();
+            }
+
+            Ok("Bluetooth disabled successfully".to_string())
+        },
+        "enable_bluetooth" => {
+            let commands = vec![
+                "sc config BluetoothUserService start= demand",
+                "sc config BTAGService start= demand",
+                "sc config BthA2dp start= demand",
+                "sc config BthAvctpSvc start= demand",
+                "sc config BthEnum start= demand",
+                "sc config BthHFEnum start= demand",
+                "sc config BthLEEnum start= demand",
+                "sc config BthMini start= demand",
+                "sc config BTHMODEM start= demand",
+                "sc config BTHPORT start= demand",
+                "sc config bthserv start= demand",
+                "sc config BTHUSB start= demand",
+                "sc config HidBth start= demand",
+                "sc config Microsoft_Bluetooth_AvrcpTransport start= demand",
+                "sc config RFCOMM start= demand",
+                "reg add \"HKLM\\SOFTWARE\\Microsoft\\PolicyManager\\default\\Connectivity\\AllowBluetooth\" /v \"value\" /t REG_DWORD /d \"2\" /f"
+            ];
+
+            for cmd in commands {
+                Command::new("cmd").args(&["/C", cmd]).output().ok();
+            }
+
+            Ok("Bluetooth enabled successfully".to_string())
+        },
+        "disable_game_mode" => {
+            let reg_content = r#"
+[HKEY_CURRENT_USER\SOFTWARE\Microsoft\GameBar]
+"AllowAutoGameMode"=dword:00000000
+"AutoGameModeEnabled"=dword:00000000
+"#;
+
+            let temp_file = env::temp_dir().join("disable_game_mode.reg");
+            fs::write(&temp_file, reg_content).map_err(|e| e.to_string())?;
+            
+            Command::new("reg")
+                .args(&["import", temp_file.to_str().unwrap()])
+                .output()
+                .map_err(|e| e.to_string())?;
+
+            fs::remove_file(temp_file).ok();
+            Ok("Game mode disabled successfully".to_string())
+        },
+        "enable_game_mode" => {
+            let commands = vec![
+                "reg delete \"HKCU\\SOFTWARE\\Microsoft\\GameBar\" /v \"AllowAutoGameMode\" /f",
+                "reg delete \"HKCU\\SOFTWARE\\Microsoft\\GameBar\" /v \"AutoGameModeEnabled\" /f"
+            ];
+
+            for cmd in commands {
+                Command::new("cmd").args(&["/C", cmd]).output().ok();
+            }
+
+            Ok("Game mode enabled successfully".to_string())
+        },
+        "disable_background_apps" => {
+            let reg_content = r#"
+[HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications]
+"GlobalUserDisabled"=dword:00000001
+
+[HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Search]
+"BackgroundAppGlobalToggle"=dword:00000000
+"#;
+
+            let temp_file = env::temp_dir().join("disable_background_apps.reg");
+            fs::write(&temp_file, reg_content).map_err(|e| e.to_string())?;
+            
+            Command::new("reg")
+                .args(&["import", temp_file.to_str().unwrap()])
+                .output()
+                .map_err(|e| e.to_string())?;
+
+            fs::remove_file(temp_file).ok();
+            Ok("Background apps disabled successfully".to_string())
+        },
+        "enable_background_apps" => {
+            let commands = vec![
+                "reg delete \"HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\BackgroundAccessApplications\" /v \"GlobalUserDisabled\" /f",
+                "reg delete \"HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Search\" /v \"BackgroundAppGlobalToggle\" /f"
+            ];
+
+            for cmd in commands {
+                Command::new("cmd").args(&["/C", cmd]).output().ok();
+            }
+
+            Ok("Background apps enabled successfully".to_string())
+        },
+        "disable_search_indexing" => {
+            let commands = vec![
+                "sc config WSearch start= disabled",
+                "sc stop WSearch"
+            ];
+
+            for cmd in commands {
+                Command::new("cmd").args(&["/C", cmd]).output().ok();
+            }
+
+            Ok("Search indexing disabled successfully".to_string())
+        },
+        "enable_search_indexing" => {
+            let commands = vec![
+                "sc config WSearch start= auto",
+                "sc start WSearch"
+            ];
+
+            for cmd in commands {
+                Command::new("cmd").args(&["/C", cmd]).output().ok();
+            }
+
+            Ok("Search indexing enabled successfully".to_string())
+        },
+        // Placeholder functions for visual effects
         "disable_visual_effects" => Ok("Visual effects disabled successfully".to_string()),
         "enable_visual_effects" => Ok("Visual effects enabled successfully".to_string()),
-        "disable_search_indexing" => Ok("Search indexing disabled successfully".to_string()),
-        "enable_search_indexing" => Ok("Search indexing enabled successfully".to_string()),
-        "disable_bluetooth" => Ok("Bluetooth disabled successfully".to_string()),
-        "enable_bluetooth" => Ok("Bluetooth enabled successfully".to_string()),
-        "disable_background_apps" => Ok("Background apps disabled successfully".to_string()),
-        "enable_background_apps" => Ok("Background apps enabled successfully".to_string()),
-        "disable_game_mode" => Ok("Game mode disabled successfully".to_string()),
-        "enable_game_mode" => Ok("Game mode enabled successfully".to_string()),
         _ => Err(format!("Function {} not found", name))
     }
 }

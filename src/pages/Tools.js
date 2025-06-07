@@ -83,11 +83,47 @@ const Tools = () => {
 
   return (
     <motion.div
-      style={{ padding: '30px' }}
+      style={{ 
+        padding: '30px',
+        height: '100vh',
+        overflowY: 'auto',
+        overflowX: 'hidden'
+      }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
     >
+      <style>
+        {`
+          /* Custom Scrollbar */
+          ::-webkit-scrollbar {
+            width: 6px;
+          }
+          
+          ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+          }
+          
+          ::-webkit-scrollbar-thumb {
+            background: ${primaryColor};
+            border-radius: 3px;
+            opacity: 0.7;
+          }
+          
+          ::-webkit-scrollbar-thumb:hover {
+            background: ${primaryColor}dd;
+            opacity: 1;
+          }
+          
+          /* Firefox */
+          * {
+            scrollbar-width: thin;
+            scrollbar-color: ${primaryColor} rgba(255, 255, 255, 0.05);
+          }
+        `}
+      </style>
+
       <h2 style={{ 
         fontSize: '28px',
         fontWeight: '600',
@@ -183,7 +219,10 @@ const Tools = () => {
                   backdropFilter: 'blur(12px)',
                   WebkitBackdropFilter: 'blur(12px)'
                 }}
-                whileHover={{ scale: 1.02 }}
+                whileHover={{ 
+                  scale: 1.02,
+                  boxShadow: `0 12px 40px ${primaryColor}44`
+                }}
                 whileTap={{ scale: 0.98 }}
               >
                 <tool.icon size={20} color={primaryColor} style={{
@@ -226,7 +265,7 @@ const Tools = () => {
           overflow: 'hidden'
         }}
       >
-        {/* Animated glow border effect */}
+        {/* Animated glow border effect - only on container */}
         <motion.div
           animate={{
             backgroundPosition: ['0% 0%', '100% 0%'],
@@ -255,98 +294,6 @@ const Tools = () => {
           }}
         />
 
-        {/* Corner glow effects */}
-        <motion.div
-          animate={{
-            opacity: [0.3, 0.7, 0.3],
-            scale: [1, 1.1, 1]
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            repeatType: "reverse"
-          }}
-          style={{
-            position: 'absolute',
-            top: '-10px',
-            left: '-10px',
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            background: `radial-gradient(circle, ${primaryColor}66 0%, transparent 70%)`,
-            filter: 'blur(8px)'
-          }}
-        />
-
-        <motion.div
-          animate={{
-            opacity: [0.3, 0.7, 0.3],
-            scale: [1, 1.1, 1]
-          }}
-          transition={{
-            duration: 2.5,
-            repeat: Infinity,
-            repeatType: "reverse",
-            delay: 0.5
-          }}
-          style={{
-            position: 'absolute',
-            top: '-10px',
-            right: '-10px',
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            background: `radial-gradient(circle, ${primaryColor}66 0%, transparent 70%)`,
-            filter: 'blur(8px)'
-          }}
-        />
-
-        <motion.div
-          animate={{
-            opacity: [0.3, 0.7, 0.3],
-            scale: [1, 1.1, 1]
-          }}
-          transition={{
-            duration: 2.2,
-            repeat: Infinity,
-            repeatType: "reverse",
-            delay: 1
-          }}
-          style={{
-            position: 'absolute',
-            bottom: '-10px',
-            left: '-10px',
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            background: `radial-gradient(circle, ${primaryColor}66 0%, transparent 70%)`,
-            filter: 'blur(8px)'
-          }}
-        />
-
-        <motion.div
-          animate={{
-            opacity: [0.3, 0.7, 0.3],
-            scale: [1, 1.1, 1]
-          }}
-          transition={{
-            duration: 2.8,
-            repeat: Infinity,
-            repeatType: "reverse",
-            delay: 1.5
-          }}
-          style={{
-            position: 'absolute',
-            bottom: '-10px',
-            right: '-10px',
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            background: `radial-gradient(circle, ${primaryColor}66 0%, transparent 70%)`,
-            filter: 'blur(8px)'
-          }}
-        />
-
         <h3 style={{ 
           fontSize: '20px',
           fontWeight: '600',
@@ -372,6 +319,9 @@ const Tools = () => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 + index * 0.05 }}
+              whileHover={{
+                boxShadow: `0 8px 32px ${primaryColor}44`
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
