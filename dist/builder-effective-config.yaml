@@ -1,0 +1,36 @@
+directories:
+  output: dist
+  buildResources: assets
+files:
+  - filter:
+      - build/**/*
+      - build/**/*
+      - main.js
+      - preload.js
+      - functions.js
+extraMetadata:
+  main: main.js
+appId: com.tfy.tool
+productName: TFY Tool
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: public/favicon.ico
+  artifactName: ${productName}-Setup-${version}.${ext}
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  installerIcon: public/favicon.ico
+  uninstallerIcon: public/favicon.ico
+  installerHeaderIcon: public/favicon.ico
+  menuCategory: true
+  createStartMenuShortcut: true
+  shortcutName: TFY Tool
+  license: LICENSE
+  installerSidebar: public/favicon.ico
+  uninstallerSidebar: public/favicon.ico
+extends: react-cra
+electronVersion: 26.6.10

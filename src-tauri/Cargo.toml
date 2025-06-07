@@ -1,0 +1,33 @@
+[package]
+name = "tfy-tool"
+version = "0.1.0"
+description = "TFY Tool"
+authors = ["you"]
+license = ""
+repository = ""
+edition = "2021"
+rust-version = "1.70"
+
+[build-dependencies]
+tauri-build = { version = "1.5.0", features = [] }
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+tauri = { version = "1.5.0", features = [ "api-all"] }
+reqwest = { version = "0.11", features = ["json", "blocking"] }
+tokio = { version = "1.0", features = ["full"] }
+zip = "0.6"
+dirs = "5.0"
+whoami = "1.2"
+open = "5.3.2"
+futures-util = "0.3"
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
