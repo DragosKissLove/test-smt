@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../ThemeContext';
 import { FiDownload, FiRefreshCw, FiClock } from 'react-icons/fi';
-
+import { invoke } from '@tauri-apps/api/tauri';
 
 const Extra = () => {
   const { theme, primaryColor } = useTheme();
@@ -19,13 +19,12 @@ const Extra = () => {
       .catch(err => console.error('Failed to fetch versions:', err));
   }, []);
 
-  // ✅ Aici pui funcția handleClick:
   const handleClick = async (name, url) => {
     try {
       setActiveButton(name);
       setStatus('Downloading...');
       
-      const result = await window.electron.runFunction('downloadAndRun', [name, url]);
+      const result = await invoke('download_to_desktop_and_run', { name, url });
       setStatus(result || `${name} has been downloaded and started`);
     } catch (error) {
       setStatus(`❌ Error downloading ${name}: ${error}`);
@@ -34,7 +33,6 @@ const Extra = () => {
     }
   };
 
-  // ✅ Aici pui funcția handleRobloxDowngrade:
   const handleRobloxDowngrade = async () => {
     if (!robloxVersion) {
       setStatus('Please enter a version hash');
@@ -45,9 +43,7 @@ const Extra = () => {
       setIsDownloading(true);
       setStatus('Starting Roblox downgrade...');
 
-      const result = await window.electron.downloadRobloxPlayer(robloxVersion, (message) => setStatus(message));
-
-
+      const result = await invoke('download_player', { version_hash: robloxVersion });
       setStatus(result || '✅ Roblox downgrade completed successfully!');
     } catch (error) {
       setStatus(`❌ Error: ${error}`);

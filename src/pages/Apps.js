@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTheme } from '../ThemeContext';
 import { motion } from 'framer-motion';
+import { invoke } from '@tauri-apps/api/tauri';
 
 const apps = [
   { name: 'Spotify', icon: 'spotify.png', url: 'https://download.scdn.co/SpotifySetup.exe', filename: 'SpotifySetup.exe' },
@@ -26,7 +27,7 @@ const Apps = () => {
 
   const installApp = async (app) => {
     try {
-      await window.electron.runFunction('downloadAndRun', [app.name, app.url]);
+      await invoke('download_app', { url: app.url, filename: app.filename });
     } catch (e) {
       console.error(`Eroare la instalarea ${app.name}:`, e);
     }
@@ -135,7 +136,5 @@ const Apps = () => {
     </motion.div>
   );
 };
-
-
 
 export default Apps;

@@ -98,66 +98,117 @@ const Tools = () => {
         Useful Tools
       </h2>
 
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-        gap: '16px',
-        padding: '20px 0',
-        marginBottom: '40px'
-      }}>
-        <AnimatePresence mode="popLayout">
-          {tools.map((tool, index) => (
-            <motion.button
-              key={tool.function}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.2, delay: index * 0.05 }}
-              onClick={() => handleClick(tool.function)}
-              style={{
-                height: '60px',
-                borderRadius: '12px',
-                border: `1px solid ${primaryColor}33`,
-                background: `linear-gradient(135deg, ${theme.cardBg} 0%, ${primaryColor}11 100%)`,
-                color: theme.text,
-                fontSize: '15px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '0 20px',
-                position: 'relative',
-                overflow: 'hidden',
-                boxShadow: `0 8px 32px ${primaryColor}22`
-              }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <tool.icon size={20} color={primaryColor} style={{
-                filter: `drop-shadow(0 0 8px ${primaryColor}66)`
-              }} />
-              {tool.name}
-              {activeButton === tool.function && (
-                <motion.div
-                  initial={{ scale: 0.8 }}
-                  animate={{ scale: 1, rotate: 360 }}
-                  transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-                  style={{
-                    position: 'absolute',
-                    right: '20px',
-                    width: '20px',
-                    height: '20px',
-                    border: `2px solid ${primaryColor}`,
-                    borderTopColor: 'transparent',
-                    borderRadius: '50%'
-                  }}
-                />
-              )}
-            </motion.button>
-          ))}
-        </AnimatePresence>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        style={{
+          background: theme.cardBg,
+          padding: '24px',
+          borderRadius: '16px',
+          border: `1px solid ${theme.border}`,
+          marginBottom: '24px',
+          position: 'relative',
+          overflow: 'hidden'
+        }}
+      >
+        <motion.div
+          animate={{
+            backgroundPosition: ['0% 0%', '100% 0%'],
+            opacity: [0.3, 0.7, 0.3]
+          }}
+          transition={{
+            duration: 4,
+            ease: "linear",
+            repeat: Infinity,
+            repeatType: "reverse"
+          }}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            borderRadius: '16px',
+            padding: '1px',
+            background: `linear-gradient(90deg, 
+              ${primaryColor}00 0%, 
+              ${primaryColor} 50%,
+              ${primaryColor}00 100%
+            )`,
+            mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+            maskComposite: 'exclude',
+          }}
+        />
+
+        <h3 style={{ 
+          fontSize: '20px',
+          fontWeight: '600',
+          marginBottom: '20px',
+          color: primaryColor,
+          filter: `drop-shadow(0 0 10px ${primaryColor}66)`
+        }}>
+          System Tools
+        </h3>
+
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+          gap: '16px'
+        }}>
+          <AnimatePresence mode="popLayout">
+            {tools.map((tool, index) => (
+              <motion.button
+                key={tool.function}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2, delay: index * 0.05 }}
+                onClick={() => handleClick(tool.function)}
+                style={{
+                  height: '60px',
+                  borderRadius: '12px',
+                  border: `1px solid ${primaryColor}33`,
+                  background: `linear-gradient(135deg, ${theme.cardBg} 0%, ${primaryColor}11 100%)`,
+                  color: theme.text,
+                  fontSize: '15px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '0 20px',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  boxShadow: `0 8px 32px ${primaryColor}22`,
+                  backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)'
+                }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <tool.icon size={20} color={primaryColor} style={{
+                  filter: `drop-shadow(0 0 8px ${primaryColor}66)`
+                }} />
+                {tool.name}
+                {activeButton === tool.function && (
+                  <motion.div
+                    initial={{ scale: 0.8 }}
+                    animate={{ scale: 1, rotate: 360 }}
+                    transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                    style={{
+                      position: 'absolute',
+                      right: '20px',
+                      width: '20px',
+                      height: '20px',
+                      border: `2px solid ${primaryColor}`,
+                      borderTopColor: 'transparent',
+                      borderRadius: '50%'
+                    }}
+                  />
+                )}
+              </motion.button>
+            ))}
+          </AnimatePresence>
+        </div>
+      </motion.div>
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
