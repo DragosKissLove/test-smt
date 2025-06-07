@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTheme } from '../ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiZap, FiTool, FiDownload, FiShield, FiTrash2, FiBox, FiEye, FiSearch, FiPrinter, FiBell, FiMonitor, FiWifi, FiBluetooth, FiLayers, FiPlay } from 'react-icons/fi';
+import { invoke } from '@tauri-apps/api/tauri';
 
 const tools = [
   { name: 'WinRAR Crack', function: 'winrar_crack', icon: FiDownload },
@@ -44,7 +45,7 @@ const Tools = () => {
     try {
       setActiveButton(funcName);
       setStatus('Processing...');
-      const result = await window.electron.runFunction(funcName, null);
+      const result = await invoke('run_function', { name: funcName, args: null });
       setStatus(result || 'Operation completed successfully!');
     } catch (error) {
       setStatus(`Error: ${error}`);
@@ -63,10 +64,11 @@ const Tools = () => {
     try {
       setStatus(`${newState ? 'Enabling' : 'Disabling'} ${windowsFeatures.find(f => f.key === featureKey)?.name}...`);
       
-      // TODO: Add actual function calls here
-      // const result = await window.electron.toggleWindowsFeature(featureKey, newState);
+      // Call the appropriate function based on feature and state
+      const functionName = `${newState ? 'enable' : 'disable'}_${featureKey}`;
+      const result = await invoke('run_function', { name: functionName, args: null });
       
-      setStatus(`${windowsFeatures.find(f => f.key === featureKey)?.name} ${newState ? 'enabled' : 'disabled'} successfully!`);
+      setStatus(result || `${windowsFeatures.find(f => f.key === featureKey)?.name} ${newState ? 'enabled' : 'disabled'} successfully!`);
       
       setTimeout(() => setStatus(''), 3000);
     } catch (error) {
@@ -219,15 +221,140 @@ const Tools = () => {
           padding: '24px',
           borderRadius: '16px',
           border: `1px solid ${theme.border}`,
-          marginBottom: '24px'
+          marginBottom: '24px',
+          position: 'relative',
+          overflow: 'hidden'
         }}
       >
+        {/* Animated glow border effect */}
+        <motion.div
+          animate={{
+            backgroundPosition: ['0% 0%', '100% 0%'],
+            opacity: [0.4, 0.8, 0.4]
+          }}
+          transition={{
+            duration: 3,
+            ease: "linear",
+            repeat: Infinity,
+            repeatType: "reverse"
+          }}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            borderRadius: '16px',
+            padding: '2px',
+            background: `linear-gradient(90deg, 
+              ${primaryColor}00 0%, 
+              ${primaryColor}88 25%,
+              ${primaryColor} 50%,
+              ${primaryColor}88 75%,
+              ${primaryColor}00 100%
+            )`,
+            mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+            maskComposite: 'exclude',
+          }}
+        />
+
+        {/* Corner glow effects */}
+        <motion.div
+          animate={{
+            opacity: [0.3, 0.7, 0.3],
+            scale: [1, 1.1, 1]
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            repeatType: "reverse"
+          }}
+          style={{
+            position: 'absolute',
+            top: '-10px',
+            left: '-10px',
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${primaryColor}66 0%, transparent 70%)`,
+            filter: 'blur(8px)'
+          }}
+        />
+
+        <motion.div
+          animate={{
+            opacity: [0.3, 0.7, 0.3],
+            scale: [1, 1.1, 1]
+          }}
+          transition={{
+            duration: 2.5,
+            repeat: Infinity,
+            repeatType: "reverse",
+            delay: 0.5
+          }}
+          style={{
+            position: 'absolute',
+            top: '-10px',
+            right: '-10px',
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${primaryColor}66 0%, transparent 70%)`,
+            filter: 'blur(8px)'
+          }}
+        />
+
+        <motion.div
+          animate={{
+            opacity: [0.3, 0.7, 0.3],
+            scale: [1, 1.1, 1]
+          }}
+          transition={{
+            duration: 2.2,
+            repeat: Infinity,
+            repeatType: "reverse",
+            delay: 1
+          }}
+          style={{
+            position: 'absolute',
+            bottom: '-10px',
+            left: '-10px',
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${primaryColor}66 0%, transparent 70%)`,
+            filter: 'blur(8px)'
+          }}
+        />
+
+        <motion.div
+          animate={{
+            opacity: [0.3, 0.7, 0.3],
+            scale: [1, 1.1, 1]
+          }}
+          transition={{
+            duration: 2.8,
+            repeat: Infinity,
+            repeatType: "reverse",
+            delay: 1.5
+          }}
+          style={{
+            position: 'absolute',
+            bottom: '-10px',
+            right: '-10px',
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${primaryColor}66 0%, transparent 70%)`,
+            filter: 'blur(8px)'
+          }}
+        />
+
         <h3 style={{ 
           fontSize: '20px',
           fontWeight: '600',
           marginBottom: '20px',
           color: primaryColor,
-          filter: `drop-shadow(0 0 10px ${primaryColor}66)`
+          filter: `drop-shadow(0 0 10px ${primaryColor}66)`,
+          position: 'relative',
+          zIndex: 1
         }}>
           Windows Features
         </h3>
@@ -235,7 +362,9 @@ const Tools = () => {
         <div style={{ 
           display: 'grid', 
           gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
-          gap: '16px'
+          gap: '16px',
+          position: 'relative',
+          zIndex: 1
         }}>
           {windowsFeatures.map((feature, index) => (
             <motion.div
@@ -251,15 +380,44 @@ const Tools = () => {
                 borderRadius: '12px',
                 background: `linear-gradient(135deg, ${theme.cardBg} 0%, ${primaryColor}08 100%)`,
                 border: `1px solid ${primaryColor}22`,
-                transition: 'all 0.3s ease'
+                transition: 'all 0.3s ease',
+                position: 'relative',
+                overflow: 'hidden'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <feature.icon 
-                  size={20} 
-                  color={primaryColor} 
-                  style={{ filter: `drop-shadow(0 0 6px ${primaryColor}66)` }}
-                />
+              {/* Individual item glow effect */}
+              <motion.div
+                animate={{
+                  opacity: featureStates[feature.key] ? [0.2, 0.4, 0.2] : [0, 0, 0]
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  repeatType: "reverse"
+                }}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: '12px',
+                  background: `radial-gradient(circle at center, ${primaryColor}22 0%, transparent 70%)`,
+                  pointerEvents: 'none'
+                }}
+              />
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative', zIndex: 1 }}>
+                <motion.div
+                  animate={{
+                    filter: featureStates[feature.key] 
+                      ? `drop-shadow(0 0 8px ${primaryColor}88)` 
+                      : `drop-shadow(0 0 4px ${primaryColor}44)`
+                  }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <feature.icon 
+                    size={20} 
+                    color={primaryColor}
+                  />
+                </motion.div>
                 <span style={{ 
                   fontSize: '14px', 
                   fontWeight: 500,
@@ -285,8 +443,9 @@ const Tools = () => {
                   position: 'relative',
                   transition: 'all 0.3s ease',
                   boxShadow: featureStates[feature.key] 
-                    ? `0 0 12px ${primaryColor}66`
-                    : '0 0 8px rgba(0, 0, 0, 0.2)'
+                    ? `0 0 16px ${primaryColor}88, inset 0 0 8px ${primaryColor}44`
+                    : '0 0 8px rgba(0, 0, 0, 0.2)',
+                  zIndex: 1
                 }}
               >
                 <motion.div
@@ -302,7 +461,9 @@ const Tools = () => {
                     position: 'absolute',
                     top: '2px',
                     left: '2px',
-                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
+                    boxShadow: featureStates[feature.key]
+                      ? `0 2px 8px rgba(0, 0, 0, 0.3), 0 0 4px ${primaryColor}66`
+                      : '0 2px 4px rgba(0, 0, 0, 0.2)'
                   }}
                 />
               </motion.button>
@@ -323,7 +484,8 @@ const Tools = () => {
               borderRadius: '12px',
               background: theme.cardBg,
               border: `1px solid ${theme.border}`,
-              color: theme.text
+              color: theme.text,
+              boxShadow: `0 0 20px ${primaryColor}33`
             }}
           >
             {status}

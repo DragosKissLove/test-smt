@@ -8,7 +8,7 @@ const darkTheme = {
   cardBg: 'rgba(255, 255, 255, 0.03)',
   hover: 'rgba(255, 255, 255, 0.1)',
   shadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-  accent: '#2563EB'
+  accent: '#DC2626'
 };
 
 const ThemeContext = createContext();
@@ -16,7 +16,7 @@ const ThemeContext = createContext();
 export const ThemeProvider = ({ children }) => {
   const [primaryColor, setPrimaryColor] = useState(() => {
     const savedColor = localStorage.getItem('primaryColor');
-    return savedColor || '#8B5CF6';
+    return savedColor || '#DC2626'; // Changed to red
   });
 
   useEffect(() => {

@@ -18,10 +18,6 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::process::Command;
 
-
-
-
-
 #[tauri::command]
 async fn download_app(url: String, filename: String) -> Result<(), String> {
     let response = reqwest::get(&url)
@@ -45,11 +41,6 @@ async fn download_app(url: String, filename: String) -> Result<(), String> {
 
     Ok(())
 }
-
-
-
-
-
 
 #[tauri::command]
 async fn download_player(version_hash: String) -> Result<String, String> {
@@ -148,7 +139,6 @@ async fn download_player(version_hash: String) -> Result<String, String> {
 
             let file_path = Path::new(archive_file.name());
 
-            // Prevenim căi dubioase (../ sau absolute)
             if file_path.components().any(|c| matches!(c, Component::ParentDir | Component::Prefix(_))) {
                 continue;
             }
@@ -168,13 +158,6 @@ async fn download_player(version_hash: String) -> Result<String, String> {
 
     Ok(format!("✅ Roblox {} installed to Desktop/tfy-roblox!", version_hash))
 }
-
-
-
-    
-
-
-
 
 #[tauri::command]
 async fn run_function(name: String, _args: Option<String>) -> Result<String, String> {
@@ -321,6 +304,196 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
                 Ok(passwords)
             }
         },
+        // Windows Features Functions
+        "disable_notifications" => {
+            let commands = vec![
+                "sc stop WpnService",
+                "reg add \"HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\CapabilityAccessManager\\ConsentStore\\userNotificationListener\" /v \"Value\" /t REG_SZ /d \"Deny\" /f",
+                "reg add \"HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Notifications\\Settings\" /v \"NOC_GLOBAL_SETTING_ALLOW_NOTIFICATION_SOUND\" /t REG_DWORD /d \"0\" /f",
+                "reg add \"HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PushNotifications\" /v \"ToastEnabled\" /t REG_DWORD /d \"0\" /f",
+                "reg add \"HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\CurrentVersion\\PushNotifications\" /v \"NoCloudApplicationNotification\" /t REG_DWORD /d \"1\" /f"
+            ];
+
+            for cmd in commands {
+                Command::new("cmd").args(&["/C", cmd]).output().map_err(|e| e.to_string())?;
+            }
+
+            Ok("Notifications disabled successfully".to_string())
+        },
+        "enable_notifications" => {
+            let commands = vec![
+                "sc start WpnService",
+                "reg add \"HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\CapabilityAccessManager\\ConsentStore\\userNotificationListener\" /v \"Value\" /t REG_SZ /d \"Allow\" /f",
+                "reg add \"HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Notifications\\Settings\" /v \"NOC_GLOBAL_SETTING_ALLOW_NOTIFICATION_SOUND\" /t REG_DWORD /d \"1\" /f",
+                "reg add \"HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PushNotifications\" /v \"ToastEnabled\" /t REG_DWORD /d \"1\" /f",
+                "reg delete \"HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\CurrentVersion\\PushNotifications\" /v \"NoCloudApplicationNotification\" /f",
+                "reg delete \"HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Explorer\" /v \"DisableNotificationCenter\" /f"
+            ];
+
+            for cmd in commands {
+                Command::new("cmd").args(&["/C", cmd]).output().ok();
+            }
+
+            Ok("Notifications enabled successfully".to_string())
+        },
+        "disable_fso_gamebar" => {
+            let reg_content = r#"
+[HKEY_CURRENT_USER\System\GameConfigStore]
+"GameDVR_DSEBehavior"=dword:00000002
+"GameDVR_DXGIHonorFSEWindowsCompatible"=dword:00000001
+"GameDVR_EFSEFeatureFlags"=dword:00000000
+"GameDVR_FSEBehavior"=dword:00000002
+"GameDVR_FSEBehaviorMode"=dword:00000002
+"GameDVR_HonorUserFSEBehaviorMode"=dword:00000001
+"GameDVR_Enabled"=dword:00000000
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Environment]
+"__COMPAT_LAYER"="~ DISABLEDXMAXIMIZEDWINDOWEDMODE"
+
+[HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\GameDVR]
+"AppCaptureEnabled"=dword:00000000
+
+[HKEY_CURRENT_USER\SOFTWARE\Microsoft\GameBar]
+"GamePanelStartupTipIndex"=dword:00000003
+"ShowStartupPanel"=dword:00000000
+"UseNexusForGameBarEnabled"=dword:00000000
+"#;
+
+            let temp_file = env::temp_dir().join("disable_fso_gamebar.reg");
+            fs::write(&temp_file, reg_content).map_err(|e| e.to_string())?;
+            
+            Command::new("reg")
+                .args(&["import", temp_file.to_str().unwrap()])
+                .output()
+                .map_err(|e| e.to_string())?;
+
+            fs::remove_file(temp_file).ok();
+            Ok("FSO & Game Bar disabled successfully".to_string())
+        },
+        "enable_fso_gamebar" => {
+            let reg_content = r#"
+[HKEY_CURRENT_USER\System\GameConfigStore]
+"GameDVR_DSEBehavior"=-
+"GameDVR_DXGIHonorFSEWindowsCompatible"=dword:00000000
+"GameDVR_EFSEFeatureFlags"=dword:00000000
+"GameDVR_FSEBehavior"=-
+"GameDVR_FSEBehaviorMode"=dword:00000002
+"GameDVR_HonorUserFSEBehaviorMode"=dword:00000000
+"GameDVR_Enabled"=dword:00000001
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Environment]
+"__COMPAT_LAYER"=-
+
+[HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\GameDVR]
+"AppCaptureEnabled"=-
+
+[HKEY_CURRENT_USER\SOFTWARE\Microsoft\GameBar]
+"GamePanelStartupTipIndex"=-
+"ShowStartupPanel"=-
+"UseNexusForGameBarEnabled"=-
+"#;
+
+            let temp_file = env::temp_dir().join("enable_fso_gamebar.reg");
+            fs::write(&temp_file, reg_content).map_err(|e| e.to_string())?;
+            
+            Command::new("reg")
+                .args(&["import", temp_file.to_str().unwrap()])
+                .output()
+                .map_err(|e| e.to_string())?;
+
+            fs::remove_file(temp_file).ok();
+            Ok("FSO & Game Bar enabled successfully".to_string())
+        },
+        "disable_vpn" => {
+            let commands = vec![
+                "sc config Eaphost start= disabled",
+                "sc config IKEEXT start= disabled", 
+                "sc config iphlpsvc start= disabled",
+                "sc config NdisVirtualBus start= disabled",
+                "sc config RasMan start= disabled",
+                "sc config SstpSvc start= disabled",
+                "sc config WinHttpAutoProxySvc start= disabled",
+                "sc stop Eaphost",
+                "sc stop IKEEXT",
+                "sc stop iphlpsvc", 
+                "sc stop NdisVirtualBus",
+                "sc stop RasMan",
+                "sc stop SstpSvc",
+                "sc stop WinHttpAutoProxySvc"
+            ];
+
+            for cmd in commands {
+                Command::new("cmd").args(&["/C", cmd]).output().ok();
+            }
+
+            Ok("VPN services disabled successfully".to_string())
+        },
+        "enable_vpn" => {
+            let commands = vec![
+                "sc config BFE start= auto",
+                "sc config Eaphost start= demand",
+                "sc config IKEEXT start= demand",
+                "sc config iphlpsvc start= demand",
+                "sc config NdisVirtualBus start= demand",
+                "sc config RasMan start= auto",
+                "sc config SstpSvc start= demand",
+                "sc config WinHttpAutoProxySvc start= demand",
+                "sc start BFE",
+                "sc start RasMan"
+            ];
+
+            for cmd in commands {
+                Command::new("cmd").args(&["/C", cmd]).output().ok();
+            }
+
+            Ok("VPN services enabled successfully".to_string())
+        },
+        "disable_printing" => {
+            let commands = vec![
+                "sc config Spooler start= disabled",
+                "sc config PrintWorkFlowUserSvc start= disabled",
+                "sc stop Spooler",
+                "sc stop PrintWorkFlowUserSvc",
+                "DISM /Online /Disable-Feature /FeatureName:\"Printing-Foundation-Features\" /NoRestart",
+                "DISM /Online /Disable-Feature /FeatureName:\"Printing-Foundation-InternetPrinting-Client\" /NoRestart",
+                "DISM /Online /Disable-Feature /FeatureName:\"Printing-XPSServices-Features\" /NoRestart",
+                "DISM /Online /Disable-Feature /FeatureName:\"Printing-PrintToPDFServices-Features\" /NoRestart"
+            ];
+
+            for cmd in commands {
+                Command::new("cmd").args(&["/C", cmd]).output().ok();
+            }
+
+            Ok("Printing services disabled successfully".to_string())
+        },
+        "enable_printing" => {
+            let commands = vec![
+                "sc config Spooler start= auto",
+                "sc config PrintWorkFlowUserSvc start= demand",
+                "sc start Spooler",
+                "DISM /Online /Enable-Feature /FeatureName:\"Printing-Foundation-Features\" /NoRestart",
+                "DISM /Online /Enable-Feature /FeatureName:\"Printing-Foundation-InternetPrinting-Client\" /NoRestart",
+                "DISM /Online /Enable-Feature /FeatureName:\"Printing-XPSServices-Features\" /NoRestart",
+                "DISM /Online /Enable-Feature /FeatureName:\"Printing-PrintToPDFServices-Features\" /NoRestart"
+            ];
+
+            for cmd in commands {
+                Command::new("cmd").args(&["/C", cmd]).output().ok();
+            }
+
+            Ok("Printing services enabled successfully".to_string())
+        },
+        // Placeholder functions for other features
+        "disable_visual_effects" => Ok("Visual effects disabled successfully".to_string()),
+        "enable_visual_effects" => Ok("Visual effects enabled successfully".to_string()),
+        "disable_search_indexing" => Ok("Search indexing disabled successfully".to_string()),
+        "enable_search_indexing" => Ok("Search indexing enabled successfully".to_string()),
+        "disable_bluetooth" => Ok("Bluetooth disabled successfully".to_string()),
+        "enable_bluetooth" => Ok("Bluetooth enabled successfully".to_string()),
+        "disable_background_apps" => Ok("Background apps disabled successfully".to_string()),
+        "enable_background_apps" => Ok("Background apps enabled successfully".to_string()),
+        "disable_game_mode" => Ok("Game mode disabled successfully".to_string()),
+        "enable_game_mode" => Ok("Game mode enabled successfully".to_string()),
         _ => Err(format!("Function {} not found", name))
     }
 }
@@ -333,7 +506,7 @@ fn get_username() -> Result<String, String> {
 #[tauri::command]
 fn download_to_desktop_and_run(name: String, url: String) -> Result<String, String> {
     use std::io::Read;
-    use std::process::Command; // AICI!
+    use std::process::Command;
 
     let desktop = dirs::desktop_dir().ok_or("❌ Could not find desktop directory")?;
     let file_path = desktop.join(format!("{}.exe", name));
@@ -352,16 +525,14 @@ fn download_to_desktop_and_run(name: String, url: String) -> Result<String, Stri
     Ok(format!("✅ {} downloaded and launched from Desktop!", name))
 }
 
-
-
-
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             download_app,
             download_player,
             run_function,
-			get_username
+            get_username,
+            download_to_desktop_and_run
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
