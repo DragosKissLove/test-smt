@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useTheme } from '../ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiZap, FiTool, FiDownload, FiShield, FiTrash2, FiBox, FiEye, FiSearch, FiPrinter, FiBell, FiGamepad2, FiWifi, FiBluetooth, FiLayers, FiPlay } from 'react-icons/fi';
-import { invoke } from '@tauri-apps/api/tauri';
+import { FiZap, FiTool, FiDownload, FiShield, FiTrash2, FiBox, FiEye, FiSearch, FiPrinter, FiBell, FiMonitor, FiWifi, FiBluetooth, FiLayers, FiPlay } from 'react-icons/fi';
 
 const tools = [
   { name: 'WinRAR Crack', function: 'winrar_crack', icon: FiDownload },
@@ -18,7 +17,7 @@ const windowsFeatures = [
   { name: 'Search Indexing', key: 'search_indexing', icon: FiSearch },
   { name: 'Printing Service', key: 'printing', icon: FiPrinter },
   { name: 'Notifications', key: 'notifications', icon: FiBell },
-  { name: 'FSO & Game Bar', key: 'fso_gamebar', icon: FiGamepad2 },
+  { name: 'FSO & Game Bar', key: 'fso_gamebar', icon: FiMonitor },
   { name: 'VPN Service', key: 'vpn', icon: FiWifi },
   { name: 'Bluetooth', key: 'bluetooth', icon: FiBluetooth },
   { name: 'Background Apps', key: 'background_apps', icon: FiLayers },
@@ -45,10 +44,7 @@ const Tools = () => {
     try {
       setActiveButton(funcName);
       setStatus('Processing...');
-      const result = await invoke('run_function', { 
-        name: funcName,
-        args: null
-      });
+      const result = await window.electron.runFunction(funcName, null);
       setStatus(result || 'Operation completed successfully!');
     } catch (error) {
       setStatus(`Error: ${error}`);
@@ -68,10 +64,7 @@ const Tools = () => {
       setStatus(`${newState ? 'Enabling' : 'Disabling'} ${windowsFeatures.find(f => f.key === featureKey)?.name}...`);
       
       // TODO: Add actual function calls here
-      // const result = await invoke('toggle_windows_feature', { 
-      //   feature: featureKey,
-      //   enabled: newState
-      // });
+      // const result = await window.electron.toggleWindowsFeature(featureKey, newState);
       
       setStatus(`${windowsFeatures.find(f => f.key === featureKey)?.name} ${newState ? 'enabled' : 'disabled'} successfully!`);
       

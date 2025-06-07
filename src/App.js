@@ -10,7 +10,6 @@ import About from './pages/About';
 import Login from './components/Login';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMinus, FiX } from 'react-icons/fi';
-import { appWindow } from '@tauri-apps/api/window';
 
 const App = () => {
   const { theme, primaryColor } = useTheme();
@@ -35,11 +34,11 @@ const App = () => {
   };
 
   const handleMinimize = () => {
-    appWindow.minimize();
+    window.electron.minimize();
   };
 
   const handleClose = () => {
-    appWindow.close();
+    window.electron.close();
   };
 
   if (!user) {
