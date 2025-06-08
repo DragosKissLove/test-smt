@@ -290,11 +290,10 @@ const Settings = () => {
                   layoutId="activeIndicator"
                   style={{
                     position: 'absolute',
-                    left: 0,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
+                    left: '-20px',
+                    top: 0,
+                    bottom: 0,
                     width: '4px',
-                    height: '100%',
                     background: primaryColor,
                     borderRadius: '0 2px 2px 0'
                   }}
@@ -349,13 +348,44 @@ const Settings = () => {
                 borderRadius: '20px',
                 padding: '32px',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
-                marginBottom: '24px'
+                marginBottom: '24px',
+                position: 'relative',
+                overflow: 'hidden'
               }}>
+                {/* Animated border */}
+                <motion.div
+                  animate={{
+                    backgroundPosition: ['0% 0%', '100% 0%'],
+                    opacity: [0.3, 0.7, 0.3]
+                  }}
+                  transition={{
+                    duration: 4,
+                    ease: "linear",
+                    repeat: Infinity,
+                    repeatType: "reverse"
+                  }}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    borderRadius: '20px',
+                    padding: '1px',
+                    background: `linear-gradient(90deg, 
+                      ${primaryColor}00 0%, 
+                      ${primaryColor} 50%,
+                      ${primaryColor}00 100%
+                    )`,
+                    mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                    maskComposite: 'exclude',
+                  }}
+                />
+
                 <h3 style={{
                   fontSize: '20px',
                   fontWeight: '600',
                   margin: '0 0 24px 0',
-                  color: theme.text
+                  color: theme.text,
+                  position: 'relative',
+                  zIndex: 1
                 }}>
                   Color Themes
                 </h3>
@@ -363,7 +393,9 @@ const Settings = () => {
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
                   gap: '16px',
-                  marginBottom: '32px'
+                  marginBottom: '32px',
+                  position: 'relative',
+                  zIndex: 1
                 }}>
                   {colorPresets.map((preset, index) => (
                     <motion.button
@@ -436,7 +468,9 @@ const Settings = () => {
                   padding: '24px',
                   borderRadius: '16px',
                   background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  position: 'relative',
+                  zIndex: 1
                 }}>
                   <h4 style={{
                     fontSize: '16px',
@@ -518,13 +552,44 @@ const Settings = () => {
                 background: 'rgba(255, 255, 255, 0.03)',
                 borderRadius: '20px',
                 padding: '32px',
-                border: '1px solid rgba(255, 255, 255, 0.1)'
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                position: 'relative',
+                overflow: 'hidden'
               }}>
+                {/* Animated border */}
+                <motion.div
+                  animate={{
+                    backgroundPosition: ['0% 0%', '100% 0%'],
+                    opacity: [0.3, 0.7, 0.3]
+                  }}
+                  transition={{
+                    duration: 4,
+                    ease: "linear",
+                    repeat: Infinity,
+                    repeatType: "reverse"
+                  }}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    borderRadius: '20px',
+                    padding: '1px',
+                    background: `linear-gradient(90deg, 
+                      ${primaryColor}00 0%, 
+                      ${primaryColor} 50%,
+                      ${primaryColor}00 100%
+                    )`,
+                    mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                    maskComposite: 'exclude',
+                  }}
+                />
+
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '16px',
-                  marginBottom: '24px'
+                  marginBottom: '24px',
+                  position: 'relative',
+                  zIndex: 1
                 }}>
                   <div style={{
                     width: '60px',
@@ -574,7 +639,9 @@ const Settings = () => {
                     alignItems: 'center',
                     gap: '12px',
                     opacity: isChecking ? 0.7 : 1,
-                    transition: 'all 0.3s ease'
+                    transition: 'all 0.3s ease',
+                    position: 'relative',
+                    zIndex: 1
                   }}
                 >
                   <FiRefreshCw 
@@ -599,7 +666,9 @@ const Settings = () => {
                         background: 'rgba(255, 255, 255, 0.05)',
                         border: `1px solid ${primaryColor}30`,
                         color: theme.text,
-                        fontSize: '14px'
+                        fontSize: '14px',
+                        position: 'relative',
+                        zIndex: 1
                       }}
                     >
                       {updateStatus}
@@ -645,13 +714,44 @@ const Settings = () => {
                   background: 'rgba(255, 255, 255, 0.03)',
                   borderRadius: '20px',
                   padding: '32px',
-                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  position: 'relative',
+                  overflow: 'hidden'
                 }}>
+                  {/* Animated border */}
+                  <motion.div
+                    animate={{
+                      backgroundPosition: ['0% 0%', '100% 0%'],
+                      opacity: [0.3, 0.7, 0.3]
+                    }}
+                    transition={{
+                      duration: 4,
+                      ease: "linear",
+                      repeat: Infinity,
+                      repeatType: "reverse"
+                    }}
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      borderRadius: '20px',
+                      padding: '1px',
+                      background: `linear-gradient(90deg, 
+                        ${primaryColor}00 0%, 
+                        ${primaryColor} 50%,
+                        ${primaryColor}00 100%
+                      )`,
+                      mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                      maskComposite: 'exclude',
+                    }}
+                  />
+
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '12px',
-                    marginBottom: '24px'
+                    marginBottom: '24px',
+                    position: 'relative',
+                    zIndex: 1
                   }}>
                     <div style={{
                       width: '40px',
@@ -673,7 +773,13 @@ const Settings = () => {
                       Application Info
                     </h3>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    gap: '16px',
+                    position: 'relative',
+                    zIndex: 1
+                  }}>
                     <div style={{
                       display: 'flex',
                       justifyContent: 'space-between',
@@ -720,13 +826,44 @@ const Settings = () => {
                   background: 'rgba(255, 255, 255, 0.03)',
                   borderRadius: '20px',
                   padding: '32px',
-                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  position: 'relative',
+                  overflow: 'hidden'
                 }}>
+                  {/* Animated border */}
+                  <motion.div
+                    animate={{
+                      backgroundPosition: ['0% 0%', '100% 0%'],
+                      opacity: [0.3, 0.7, 0.3]
+                    }}
+                    transition={{
+                      duration: 4,
+                      ease: "linear",
+                      repeat: Infinity,
+                      repeatType: "reverse"
+                    }}
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      borderRadius: '20px',
+                      padding: '1px',
+                      background: `linear-gradient(90deg, 
+                        ${primaryColor}00 0%, 
+                        ${primaryColor} 50%,
+                        ${primaryColor}00 100%
+                      )`,
+                      mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                      maskComposite: 'exclude',
+                    }}
+                  />
+
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '12px',
-                    marginBottom: '24px'
+                    marginBottom: '24px',
+                    position: 'relative',
+                    zIndex: 1
                   }}>
                     <div style={{
                       width: '40px',
@@ -748,7 +885,13 @@ const Settings = () => {
                       System Info
                     </h3>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    gap: '16px',
+                    position: 'relative',
+                    zIndex: 1
+                  }}>
                     <div style={{
                       display: 'flex',
                       justifyContent: 'space-between',

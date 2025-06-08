@@ -27,6 +27,17 @@ const apps = [
   { name: 'Visual Studio Code', icon: 'visual.png', url: 'https://update.code.visualstudio.com/latest/win32-x64-user/stable', filename: 'VSCodeSetup.exe', isComplex: true, color: '#007ACC', category: 'Development' }
 ];
 
+// Category color mapping for better visibility
+const categoryColors = {
+  'Media': '#E91E63',
+  'Gaming': '#2196F3', 
+  'Communication': '#9C27B0',
+  'Browser': '#FF9800',
+  'Security': '#4CAF50',
+  'Utility': '#607D8B',
+  'Development': '#3F51B5'
+};
+
 const Apps = () => {
   const { theme, primaryColor } = useTheme();
   const [downloadingApps, setDownloadingApps] = useState(new Set());
@@ -71,42 +82,18 @@ const Apps = () => {
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         style={{
-          fontSize: '32px',
-          fontWeight: '700',
-          marginBottom: '10px',
-          color: theme.text,
-          background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}aa)`,
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          position: 'relative',
-          display: 'inline-block'
+          fontSize: '28px',
+          fontWeight: '600',
+          marginBottom: '20px',
+          color: '#FFFFFF',
+          borderBottom: `2px solid ${primaryColor}`,
+          paddingBottom: '10px',
+          display: 'inline-block',
+          position: 'relative'
         }}
       >
         Install Applications
-        <div style={{
-          position: 'absolute',
-          bottom: '-8px',
-          left: 0,
-          right: 0,
-          height: '2px',
-          background: `linear-gradient(90deg, ${primaryColor}, ${primaryColor}aa)`,
-          borderRadius: '1px'
-        }} />
       </motion.h2>
-      
-      <motion.p
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.1 }}
-        style={{
-          fontSize: '16px',
-          color: `${theme.text}80`,
-          margin: '0 0 30px 0'
-        }}
-      >
-        Download and install your favorite applications
-      </motion.p>
 
       {/* Category Filter */}
       <motion.div
@@ -158,6 +145,7 @@ const Apps = () => {
         {filteredApps.map((app, index) => {
           const isDownloading = downloadingApps.has(app.name);
           const appColor = app.color || primaryColor;
+          const categoryColor = categoryColors[app.category] || primaryColor;
           
           return (
             <motion.div
@@ -224,13 +212,13 @@ const Apps = () => {
                   </h3>
                   <span style={{
                     fontSize: '12px',
-                    color: '#fff',
+                    color: '#FFFFFF',
                     fontWeight: '600',
-                    background: appColor,
+                    background: categoryColor,
                     padding: '4px 10px',
                     borderRadius: '12px',
-                    textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)',
-                    boxShadow: `0 2px 8px ${appColor}40`
+                    textShadow: '0 1px 2px rgba(0, 0, 0, 0.7)',
+                    boxShadow: `0 2px 8px ${categoryColor}40`
                   }}>
                     {app.category}
                   </span>
