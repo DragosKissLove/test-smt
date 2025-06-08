@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useTheme } from '../ThemeContext';
 import { FiUser } from 'react-icons/fi';
-import { invoke } from '@tauri-apps/api/tauri';
 
 const Login = ({ onLogin }) => {
   const { primaryColor } = useTheme();
@@ -11,10 +10,16 @@ const Login = ({ onLogin }) => {
   useEffect(() => {
     const getUsername = async () => {
       try {
-        const result = await invoke('get_username');
-        setUsername(result || 'User');
+        if (window.electron && window.electron.runFunction) {
+          const result = await window.electron.runFunction('getUsername');
+          setUsername(result || 'User');
+        } else {
+          // Fallback for web environment
+          setUsername('User');
+        }
       } catch (error) {
         console.error('Error getting username:', error);
+        setUsername('User');
       }
     };
     getUsername();
