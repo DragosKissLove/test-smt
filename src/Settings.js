@@ -150,7 +150,7 @@ const Settings = () => {
   const sections = [
     { id: 'appearance', name: 'Appearance', icon: FiDroplet },
     { id: 'updates', name: 'Updates', icon: FiDownload },
-    { id: 'info', name: 'Info', icon: FiInfo }
+    { id: 'about', name: 'About', icon: FiInfo }
   ];
 
   return (
@@ -597,9 +597,9 @@ const Settings = () => {
             </motion.div>
           )}
 
-          {activeSection === 'info' && (
+          {activeSection === 'about' && (
             <motion.div
-              key="info"
+              key="about"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
@@ -613,7 +613,7 @@ const Settings = () => {
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent'
               }}>
-                Info
+                About
               </h1>
               <p style={{
                 fontSize: '16px',

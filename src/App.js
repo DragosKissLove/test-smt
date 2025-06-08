@@ -6,7 +6,7 @@ import Apps from './pages/Apps';
 import Tools from './pages/Tools';
 import Extra from './pages/Extra';
 import Settings from './Settings';
-import Info from './pages/About';
+import About from './pages/About';
 import Login from './components/Login';
 import NotificationSystem from './components/NotificationSystem';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -53,7 +53,7 @@ const App = () => {
       Tools,
       Extra,
       Settings,
-      Info
+      About
     }[activeTab];
 
     return (
