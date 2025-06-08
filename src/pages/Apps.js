@@ -73,16 +73,40 @@ const Apps = () => {
         style={{
           fontSize: '32px',
           fontWeight: '700',
-          marginBottom: '30px',
+          marginBottom: '10px',
           color: theme.text,
           background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}aa)`,
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text'
+          backgroundClip: 'text',
+          position: 'relative',
+          display: 'inline-block'
         }}
       >
         Install Applications
+        <div style={{
+          position: 'absolute',
+          bottom: '-8px',
+          left: 0,
+          right: 0,
+          height: '2px',
+          background: `linear-gradient(90deg, ${primaryColor}, ${primaryColor}aa)`,
+          borderRadius: '1px'
+        }} />
       </motion.h2>
+      
+      <motion.p
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.1 }}
+        style={{
+          fontSize: '16px',
+          color: `${theme.text}80`,
+          margin: '0 0 30px 0'
+        }}
+      >
+        Download and install your favorite applications
+      </motion.p>
 
       {/* Category Filter */}
       <motion.div
@@ -200,11 +224,13 @@ const Apps = () => {
                   </h3>
                   <span style={{
                     fontSize: '12px',
-                    color: appColor,
-                    fontWeight: '500',
-                    background: `${appColor}22`,
-                    padding: '2px 8px',
-                    borderRadius: '8px'
+                    color: '#fff',
+                    fontWeight: '600',
+                    background: appColor,
+                    padding: '4px 10px',
+                    borderRadius: '12px',
+                    textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)',
+                    boxShadow: `0 2px 8px ${appColor}40`
                   }}>
                     {app.category}
                   </span>

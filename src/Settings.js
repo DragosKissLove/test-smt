@@ -188,11 +188,11 @@ const Settings = () => {
             overflow: 'hidden'
           }}
         >
-          {/* Animated glow effect */}
+          {/* Full animated border effect */}
           <motion.div
             animate={{
-              opacity: [0.3, 0.6, 0.3],
-              scale: [1, 1.1, 1]
+              opacity: [0.4, 0.8, 0.4],
+              scale: [1, 1.02, 1]
             }}
             transition={{
               duration: 3,
@@ -201,8 +201,20 @@ const Settings = () => {
             }}
             style={{
               position: 'absolute',
-              inset: 0,
-              background: `radial-gradient(circle at center, ${primaryColor}22 0%, transparent 70%)`,
+              inset: '-1px',
+              borderRadius: '16px',
+              padding: '1px',
+              background: `linear-gradient(45deg, 
+                ${primaryColor}00 0%, 
+                ${primaryColor}88 25%,
+                ${primaryColor} 50%,
+                ${primaryColor}88 75%,
+                ${primaryColor}00 100%
+              )`,
+              mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+              maskComposite: 'exclude',
+              WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+              WebkitMaskComposite: 'exclude',
               pointerEvents: 'none'
             }}
           />
@@ -282,9 +294,14 @@ const Settings = () => {
                     top: '50%',
                     transform: 'translateY(-50%)',
                     width: '4px',
-                    height: '24px',
+                    height: '100%',
                     background: primaryColor,
-                    borderRadius: '2px'
+                    borderRadius: '0 2px 2px 0'
+                  }}
+                  transition={{ 
+                    type: "spring", 
+                    stiffness: 300, 
+                    damping: 30 
                   }}
                 />
               )}
