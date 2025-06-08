@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useTheme } from '../ThemeContext';
 import { FiDownload, FiZap, FiTool } from 'react-icons/fi';
 
-const About = () => {
+const Info = () => {
   const { theme, primaryColor } = useTheme();
 
   const features = [
@@ -179,4 +179,4 @@ const About = () => {
   );
 };
 
-export default About;
+export default Info;

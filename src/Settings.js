@@ -168,39 +168,11 @@ const Settings = () => {
           width: '280px',
           padding: '30px 20px',
           background: 'rgba(255, 255, 255, 0.02)',
-          borderRight: `1px solid rgba(255, 255, 255, 0.1)`,
-          backdropFilter: 'blur(20px)',
-          position: 'relative',
-          overflow: 'hidden'
+          borderRight: `1px solid ${primaryColor}22`,
+          backdropFilter: 'blur(20px)'
         }}
       >
-        {/* Animated border for entire sidebar */}
-        <motion.div
-          animate={{
-            backgroundPosition: ['0% 0%', '100% 0%'],
-            opacity: [0.3, 0.7, 0.3]
-          }}
-          transition={{
-            duration: 4,
-            ease: "linear",
-            repeat: Infinity,
-            repeatType: "reverse"
-          }}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            padding: '1px',
-            background: `linear-gradient(90deg, 
-              ${primaryColor}00 0%, 
-              ${primaryColor} 50%,
-              ${primaryColor}00 100%
-            )`,
-            mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-            maskComposite: 'exclude',
-          }}
-        />
-
-        {/* User Profile with enhanced animation */}
+        {/* User Profile - Simplified with only floating particles */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -213,68 +185,35 @@ const Settings = () => {
             marginBottom: '30px',
             textAlign: 'center',
             position: 'relative',
-            overflow: 'hidden',
-            zIndex: 1
+            overflow: 'hidden'
           }}
         >
-          {/* Enhanced animated border effect for user profile */}
-          <motion.div
-            animate={{
-              opacity: [0.4, 1, 0.4],
-              scale: [1, 1.02, 1],
-              rotate: [0, 360]
-            }}
-            transition={{
-              duration: 8,
-              repeat: Infinity,
-              repeatType: "reverse",
-              ease: "easeInOut"
-            }}
-            style={{
-              position: 'absolute',
-              inset: '-2px',
-              borderRadius: '18px',
-              padding: '2px',
-              background: `conic-gradient(from 0deg, 
-                ${primaryColor}00 0deg,
-                ${primaryColor}88 90deg,
-                ${primaryColor} 180deg,
-                ${primaryColor}88 270deg,
-                ${primaryColor}00 360deg
-              )`,
-              mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-              maskComposite: 'exclude',
-              WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-              WebkitMaskComposite: 'exclude',
-              pointerEvents: 'none'
-            }}
-          />
-          
-          {/* Floating particles effect */}
-          {[...Array(3)].map((_, i) => (
+          {/* Simple floating particles - no border animations */}
+          {[...Array(5)].map((_, i) => (
             <motion.div
               key={i}
               animate={{
-                y: [-10, -30, -10],
-                x: [0, 15, 0],
-                opacity: [0.3, 0.8, 0.3],
-                scale: [0.5, 1, 0.5]
+                y: [-20, -40, -20],
+                x: [-10, 10, -10],
+                opacity: [0.2, 0.6, 0.2],
+                scale: [0.3, 0.8, 0.3]
               }}
               transition={{
-                duration: 3 + i,
+                duration: 4 + i * 0.5,
                 repeat: Infinity,
                 repeatType: "reverse",
-                delay: i * 0.5
+                delay: i * 0.8,
+                ease: "easeInOut"
               }}
               style={{
                 position: 'absolute',
-                top: `${20 + i * 15}%`,
-                left: `${10 + i * 20}%`,
-                width: '4px',
-                height: '4px',
+                top: `${15 + i * 15}%`,
+                left: `${10 + i * 15}%`,
+                width: '3px',
+                height: '3px',
                 borderRadius: '50%',
                 background: primaryColor,
-                filter: `blur(1px)`,
+                filter: `blur(0.5px)`,
                 pointerEvents: 'none'
               }}
             />
@@ -300,46 +239,31 @@ const Settings = () => {
               zIndex: 1
             }}
           >
-            <motion.div
-              animate={{ rotate: [0, 360] }}
-              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            >
-              <FiUser size={28} color="#fff" />
-            </motion.div>
+            <FiUser size={28} color="#fff" />
           </motion.div>
-          <motion.h3
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            style={{
-              fontSize: '18px',
-              fontWeight: '600',
-              margin: '0 0 4px 0',
-              color: theme.text,
-              position: 'relative',
-              zIndex: 1
-            }}
-          >
+          <h3 style={{
+            fontSize: '18px',
+            fontWeight: '600',
+            margin: '0 0 4px 0',
+            color: theme.text,
+            position: 'relative',
+            zIndex: 1
+          }}>
             {username}
-          </motion.h3>
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            style={{
-              fontSize: '14px',
-              color: `${theme.text}80`,
-              margin: 0,
-              position: 'relative',
-              zIndex: 1
-            }}
-          >
+          </h3>
+          <p style={{
+            fontSize: '14px',
+            color: `${theme.text}80`,
+            margin: 0,
+            position: 'relative',
+            zIndex: 1
+          }}>
             TFY Tool User
-          </motion.p>
+          </p>
         </motion.div>
 
         {/* Navigation Menu */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative', zIndex: 1 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {sections.map((section, index) => (
             <motion.button
               key={section.id}
@@ -412,44 +336,13 @@ const Settings = () => {
                 borderRadius: '20px',
                 padding: '32px',
                 border: `1px solid ${primaryColor}22`,
-                marginBottom: '24px',
-                position: 'relative',
-                overflow: 'hidden'
+                marginBottom: '24px'
               }}>
-                {/* Animated border */}
-                <motion.div
-                  animate={{
-                    backgroundPosition: ['0% 0%', '100% 0%'],
-                    opacity: [0.3, 0.7, 0.3]
-                  }}
-                  transition={{
-                    duration: 4,
-                    ease: "linear",
-                    repeat: Infinity,
-                    repeatType: "reverse"
-                  }}
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    borderRadius: '20px',
-                    padding: '1px',
-                    background: `linear-gradient(90deg, 
-                      ${primaryColor}00 0%, 
-                      ${primaryColor} 50%,
-                      ${primaryColor}00 100%
-                    )`,
-                    mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                    maskComposite: 'exclude',
-                  }}
-                />
-
                 <h3 style={{
                   fontSize: '20px',
                   fontWeight: '600',
                   margin: '0 0 24px 0',
-                  color: theme.text,
-                  position: 'relative',
-                  zIndex: 1
+                  color: theme.text
                 }}>
                   Color Themes
                 </h3>
@@ -457,9 +350,7 @@ const Settings = () => {
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
                   gap: '16px',
-                  marginBottom: '32px',
-                  position: 'relative',
-                  zIndex: 1
+                  marginBottom: '32px'
                 }}>
                   {colorPresets.map((preset, index) => (
                     <motion.button
@@ -532,9 +423,7 @@ const Settings = () => {
                   padding: '24px',
                   borderRadius: '16px',
                   background: 'rgba(255, 255, 255, 0.05)',
-                  border: `1px solid ${primaryColor}22`,
-                  position: 'relative',
-                  zIndex: 1
+                  border: `1px solid ${primaryColor}22`
                 }}>
                   <h4 style={{
                     fontSize: '16px',
@@ -616,44 +505,13 @@ const Settings = () => {
                 background: 'rgba(255, 255, 255, 0.03)',
                 borderRadius: '20px',
                 padding: '32px',
-                border: `1px solid ${primaryColor}22`,
-                position: 'relative',
-                overflow: 'hidden'
+                border: `1px solid ${primaryColor}22`
               }}>
-                {/* Animated border */}
-                <motion.div
-                  animate={{
-                    backgroundPosition: ['0% 0%', '100% 0%'],
-                    opacity: [0.3, 0.7, 0.3]
-                  }}
-                  transition={{
-                    duration: 4,
-                    ease: "linear",
-                    repeat: Infinity,
-                    repeatType: "reverse"
-                  }}
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    borderRadius: '20px',
-                    padding: '1px',
-                    background: `linear-gradient(90deg, 
-                      ${primaryColor}00 0%, 
-                      ${primaryColor} 50%,
-                      ${primaryColor}00 100%
-                    )`,
-                    mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                    maskComposite: 'exclude',
-                  }}
-                />
-
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '16px',
-                  marginBottom: '24px',
-                  position: 'relative',
-                  zIndex: 1
+                  marginBottom: '24px'
                 }}>
                   <div style={{
                     width: '60px',
@@ -703,9 +561,7 @@ const Settings = () => {
                     alignItems: 'center',
                     gap: '12px',
                     opacity: isChecking ? 0.7 : 1,
-                    transition: 'all 0.3s ease',
-                    position: 'relative',
-                    zIndex: 1
+                    transition: 'all 0.3s ease'
                   }}
                 >
                   <FiRefreshCw 
@@ -730,9 +586,7 @@ const Settings = () => {
                         background: 'rgba(255, 255, 255, 0.05)',
                         border: `1px solid ${primaryColor}30`,
                         color: theme.text,
-                        fontSize: '14px',
-                        position: 'relative',
-                        zIndex: 1
+                        fontSize: '14px'
                       }}
                     >
                       {updateStatus}
@@ -778,44 +632,13 @@ const Settings = () => {
                   background: 'rgba(255, 255, 255, 0.03)',
                   borderRadius: '20px',
                   padding: '32px',
-                  border: `1px solid ${primaryColor}22`,
-                  position: 'relative',
-                  overflow: 'hidden'
+                  border: `1px solid ${primaryColor}22`
                 }}>
-                  {/* Animated border */}
-                  <motion.div
-                    animate={{
-                      backgroundPosition: ['0% 0%', '100% 0%'],
-                      opacity: [0.3, 0.7, 0.3]
-                    }}
-                    transition={{
-                      duration: 4,
-                      ease: "linear",
-                      repeat: Infinity,
-                      repeatType: "reverse"
-                    }}
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      borderRadius: '20px',
-                      padding: '1px',
-                      background: `linear-gradient(90deg, 
-                        ${primaryColor}00 0%, 
-                        ${primaryColor} 50%,
-                        ${primaryColor}00 100%
-                      )`,
-                      mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                      maskComposite: 'exclude',
-                    }}
-                  />
-
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '12px',
-                    marginBottom: '24px',
-                    position: 'relative',
-                    zIndex: 1
+                    marginBottom: '24px'
                   }}>
                     <div style={{
                       width: '40px',
@@ -840,9 +663,7 @@ const Settings = () => {
                   <div style={{ 
                     display: 'flex', 
                     flexDirection: 'column', 
-                    gap: '16px',
-                    position: 'relative',
-                    zIndex: 1
+                    gap: '16px'
                   }}>
                     <div style={{
                       display: 'flex',
@@ -890,44 +711,13 @@ const Settings = () => {
                   background: 'rgba(255, 255, 255, 0.03)',
                   borderRadius: '20px',
                   padding: '32px',
-                  border: `1px solid ${primaryColor}22`,
-                  position: 'relative',
-                  overflow: 'hidden'
+                  border: `1px solid ${primaryColor}22`
                 }}>
-                  {/* Animated border */}
-                  <motion.div
-                    animate={{
-                      backgroundPosition: ['0% 0%', '100% 0%'],
-                      opacity: [0.3, 0.7, 0.3]
-                    }}
-                    transition={{
-                      duration: 4,
-                      ease: "linear",
-                      repeat: Infinity,
-                      repeatType: "reverse"
-                    }}
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      borderRadius: '20px',
-                      padding: '1px',
-                      background: `linear-gradient(90deg, 
-                        ${primaryColor}00 0%, 
-                        ${primaryColor} 50%,
-                        ${primaryColor}00 100%
-                      )`,
-                      mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                      maskComposite: 'exclude',
-                    }}
-                  />
-
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '12px',
-                    marginBottom: '24px',
-                    position: 'relative',
-                    zIndex: 1
+                    marginBottom: '24px'
                   }}>
                     <div style={{
                       width: '40px',
@@ -952,9 +742,7 @@ const Settings = () => {
                   <div style={{ 
                     display: 'flex', 
                     flexDirection: 'column', 
-                    gap: '16px',
-                    position: 'relative',
-                    zIndex: 1
+                    gap: '16px'
                   }}>
                     <div style={{
                       display: 'flex',
