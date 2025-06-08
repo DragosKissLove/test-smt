@@ -55,24 +55,24 @@ const Apps = () => {
     hidden: {},
     show: {
       transition: {
-        staggerChildren: 0.05
+        staggerChildren: 0.03
       }
     }
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20, scale: 0.9 },
+    hidden: { opacity: 0, y: 15, scale: 0.95 },
     show: {
       opacity: 1, y: 0, scale: 1,
-      transition: { type: "spring", stiffness: 400, damping: 15 }
+      transition: { type: "spring", stiffness: 500, damping: 25, duration: 0.3 }
     }
   };
 
   const headerVariants = {
-    hidden: { opacity: 0, x: -20, scale: 0.95 },
+    hidden: { opacity: 0, x: -15 },
     show: {
-      opacity: 1, x: 0, scale: 1,
-      transition: { type: "spring", stiffness: 400, damping: 20, duration: 0.2 }
+      opacity: 1, x: 0,
+      transition: { type: "spring", stiffness: 500, damping: 25, duration: 0.2 }
     }
   };
 
@@ -82,8 +82,7 @@ const Apps = () => {
         padding: '30px',
         height: '100vh',
         overflowY: 'auto',
-        overflowX: 'hidden',
-        background: `radial-gradient(ellipse at top, ${primaryColor}11 0%, transparent 50%)`
+        overflowX: 'hidden'
       }}
       initial="hidden"
       animate="show"
@@ -98,8 +97,7 @@ const Apps = () => {
           color: theme.text,
           borderBottom: `2px solid ${primaryColor}`,
           paddingBottom: '10px',
-          display: 'inline-block',
-          filter: `drop-shadow(0 0 12px ${primaryColor}66)`
+          display: 'inline-block'
         }}
       >
         Install Apps
@@ -110,47 +108,16 @@ const Apps = () => {
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-          gap: '24px',
+          gap: '20px',
           padding: '20px',
           background: 'rgba(255, 255, 255, 0.02)',
-          borderRadius: '20px',
+          borderRadius: '16px',
           border: `1px solid ${primaryColor}22`,
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          boxShadow: `0 8px 32px ${primaryColor}22, inset 0 1px 0 rgba(255, 255, 255, 0.1)`,
-          position: 'relative',
-          overflow: 'hidden'
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          position: 'relative'
         }}
       >
-        {/* Animated background particles */}
-        {[...Array(6)].map((_, i) => (
-          <motion.div
-            key={i}
-            style={{
-              position: 'absolute',
-              width: '100px',
-              height: '100px',
-              borderRadius: '50%',
-              background: `radial-gradient(circle, ${primaryColor}22 0%, transparent 70%)`,
-              filter: 'blur(40px)',
-              pointerEvents: 'none'
-            }}
-            animate={{
-              x: ['-50px', '50px', '-50px'],
-              y: ['-50px', '50px', '-50px'],
-              opacity: [0.3, 0.6, 0.3],
-              scale: [1, 1.2, 1]
-            }}
-            transition={{
-              duration: 8 + i * 2,
-              repeat: Infinity,
-              repeatType: 'reverse',
-              ease: 'easeInOut',
-              delay: i * 1.5
-            }}
-          />
-        ))}
-
         {apps.map((app) => {
           const isHovered = hoveredApp === app.name;
           const isDownloading = downloadingApps.has(app.name);
@@ -161,27 +128,26 @@ const Apps = () => {
               key={app.name}
               variants={itemVariants}
               whileHover={{ 
-                scale: 1.08,
-                y: -8,
-                rotateY: 5
+                scale: 1.05,
+                y: -4
               }}
-              whileTap={{ scale: 0.95 }}
+              whileTap={{ scale: 0.98 }}
               onMouseEnter={() => setHoveredApp(app.name)}
               onMouseLeave={() => setHoveredApp(null)}
               onClick={() => !isDownloading && installApp(app)}
               disabled={isDownloading}
               style={{
                 background: isHovered 
-                  ? `linear-gradient(135deg, ${appColor}22 0%, ${appColor}11 50%, rgba(255, 255, 255, 0.05) 100%)`
+                  ? `linear-gradient(135deg, ${appColor}15 0%, rgba(255, 255, 255, 0.05) 100%)`
                   : `linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%)`,
                 border: isHovered 
-                  ? `1px solid ${appColor}66`
+                  ? `1px solid ${appColor}44`
                   : `1px solid rgba(255, 255, 255, 0.1)`,
-                borderRadius: '20px',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
+                borderRadius: '16px',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
                 color: theme.text,
-                padding: '20px 16px',
+                padding: '18px 14px',
                 fontSize: '13px',
                 fontWeight: 600,
                 cursor: isDownloading ? 'not-allowed' : 'pointer',
@@ -190,65 +156,21 @@ const Apps = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 textAlign: 'center',
-                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                transition: 'all 0.2s ease',
                 boxShadow: isHovered
-                  ? `0 12px 40px ${appColor}44, 0 0 0 1px ${appColor}33, inset 0 1px 0 rgba(255, 255, 255, 0.2)`
-                  : `0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)`,
-                filter: hoveredApp && hoveredApp !== app.name ? 'blur(2px) brightness(0.6)' : 'none',
-                opacity: (hoveredApp && hoveredApp !== app.name) || isDownloading ? 0.5 : 1,
+                  ? `0 8px 25px ${appColor}33`
+                  : `0 4px 15px rgba(0, 0, 0, 0.2)`,
+                filter: hoveredApp && hoveredApp !== app.name ? 'blur(1px) brightness(0.7)' : 'none',
+                opacity: (hoveredApp && hoveredApp !== app.name) || isDownloading ? 0.6 : 1,
                 position: 'relative',
-                overflow: 'hidden',
-                transformStyle: 'preserve-3d',
-                perspective: '1000px'
+                overflow: 'hidden'
               }}
             >
-              {/* Shimmer effect */}
               <motion.div
-                animate={isHovered ? {
-                  x: ['-100%', '100%'],
-                  opacity: [0, 0.6, 0]
-                } : {}}
-                transition={{
-                  duration: 1.5,
-                  repeat: isHovered ? Infinity : 0,
-                  repeatDelay: 2
-                }}
+                animate={isHovered ? { scale: 1.1 } : { scale: 1 }}
+                transition={{ duration: 0.2 }}
                 style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  background: `linear-gradient(90deg, transparent, ${appColor}44, transparent)`,
-                  pointerEvents: 'none',
-                  transform: 'skewX(-20deg)'
-                }}
-              />
-
-              {/* Glow effect on hover */}
-              {isHovered && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  style={{
-                    position: 'absolute',
-                    inset: '-2px',
-                    borderRadius: '20px',
-                    background: `radial-gradient(circle at center, ${appColor}33 0%, transparent 70%)`,
-                    filter: 'blur(8px)',
-                    pointerEvents: 'none',
-                    zIndex: -1
-                  }}
-                />
-              )}
-
-              <motion.div
-                animate={isHovered ? { scale: 1.1, rotateY: 10 } : { scale: 1, rotateY: 0 }}
-                transition={{ duration: 0.3 }}
-                style={{
-                  marginBottom: '12px',
-                  filter: isHovered ? `drop-shadow(0 0 12px ${appColor}88)` : 'none'
+                  marginBottom: '10px'
                 }}
               >
                 <img
@@ -257,21 +179,18 @@ const Apps = () => {
                   style={{ 
                     width: '32px', 
                     height: '32px',
-                    borderRadius: '8px',
-                    boxShadow: isHovered ? `0 4px 16px ${appColor}44` : 'none'
+                    borderRadius: '6px'
                   }}
                 />
               </motion.div>
               
               <motion.span
                 animate={isHovered ? { 
-                  color: appColor,
-                  textShadow: `0 0 8px ${appColor}66`
+                  color: appColor
                 } : { 
-                  color: theme.text,
-                  textShadow: 'none'
+                  color: theme.text
                 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.2 }}
               >
                 {app.name}
               </motion.span>
@@ -289,18 +208,17 @@ const Apps = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    background: 'rgba(0, 0, 0, 0.9)',
+                    background: 'rgba(0, 0, 0, 0.85)',
                     borderRadius: '50%',
-                    width: '50px',
-                    height: '50px',
-                    backdropFilter: 'blur(10px)',
-                    border: `1px solid ${appColor}44`,
-                    boxShadow: `0 0 20px ${appColor}66`
+                    width: '45px',
+                    height: '45px',
+                    backdropFilter: 'blur(8px)',
+                    border: `1px solid ${appColor}33`
                   }}
                 >
                   {app.isComplex ? (
                     <l-ring
-                      size="28"
+                      size="24"
                       stroke="3"
                       bg-opacity="0"
                       speed="2"
@@ -311,9 +229,9 @@ const Apps = () => {
                       animate={{ rotate: 360 }}
                       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                       style={{
-                        width: '24px',
-                        height: '24px',
-                        border: `3px solid ${appColor}`,
+                        width: '20px',
+                        height: '20px',
+                        border: `2px solid ${appColor}`,
                         borderTopColor: 'transparent',
                         borderRadius: '50%'
                       }}
