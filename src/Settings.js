@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from './ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiRefreshCw, FiBrush, FiMonitor, FiInfo, FiCheck } from 'react-icons/fi';
+import { FiRefreshCw, FiPalette, FiMonitor, FiInfo, FiCheck } from 'react-icons/fi';
 import UpdateNotification from './components/UpdateNotification';
 
 const colorPresets = [
@@ -28,7 +28,10 @@ const Settings = () => {
     const preset = colorPresets.find(p => p.color === primaryColor);
     setSelectedPreset(preset?.name || 'Custom');
 
+    // Get username using electron function
     if (window.electron) {
+      window.electron.runFunction('getUsername');
+
       window.electron.onUpdateStatus((event, message) => {
         setUpdateStatus(message);
       });
@@ -145,7 +148,7 @@ const Settings = () => {
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <FiBrush size={20} color={primaryColor} />
+              <FiPalette size={20} color={primaryColor} />
             </div>
             <div>
               <h3 style={{ 
