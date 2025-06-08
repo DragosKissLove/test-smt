@@ -4,27 +4,27 @@ import { motion } from 'framer-motion';
 import { invoke } from '@tauri-apps/api/tauri';
 import { showNotification } from '../components/NotificationSystem';
 import { ring } from 'ldrs';
-import { FiDownload, FiCheck } from 'react-icons/fi';
+import { FiDownload } from 'react-icons/fi';
 
 // Register the ring component
 ring.register();
 
 const apps = [
-  { name: 'Spotify', icon: 'spotify.png', url: 'https://download.scdn.co/SpotifySetup.exe', filename: 'SpotifySetup.exe', isComplex: true, color: '#1DB954', category: 'Media' },
-  { name: 'Steam', icon: 'steam.png', url: 'https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe', filename: 'SteamSetup.exe', isComplex: true, color: '#1B2838', category: 'Gaming' },
-  { name: 'Discord', icon: 'discord.png', url: 'https://discord.com/api/download?platform=win', filename: 'DiscordSetup.exe', isComplex: true, color: '#5865F2', category: 'Communication' },
-  { name: 'Brave', icon: 'brave.png', url: 'https://referrals.brave.com/latest/BraveBrowserSetup.exe', filename: 'BraveBrowserSetup.exe', isComplex: true, color: '#FB542B', category: 'Browser' },
-  { name: 'Faceit AC', icon: 'faceit.png', url: 'https://cdn.faceit.com/faceit/anticheat/FaceitAC_1.0.17.36.exe', filename: 'FACEITInstaller_64.exe', isComplex: true, color: '#FF5500', category: 'Gaming' },
-  { name: 'VLC', icon: 'vlc.png', url: 'https://get.videolan.org/vlc/3.0.20/win64/vlc-3.0.20-win64.exe', filename: 'vlc.exe', isComplex: true, color: '#FF8800', category: 'Media' },
-  { name: 'Malwarebytes', icon: 'malwarebytes.png', url: 'https://downloads.malwarebytes.com/file/mb4_offline', filename: 'mbsetup.exe', isComplex: true, color: '#0078D4', category: 'Security' },
-  { name: 'WinRAR', icon: 'winrar.png', url: 'https://www.rarlab.com/rar/winrar-x64-624.exe', filename: 'winrar.exe', isComplex: true, color: '#FFD700', category: 'Utility' },
-  { name: 'Epic Games', icon: 'epic.png', url: 'https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncherInstaller.msi', filename: 'epic_installer.msi', isComplex: true, color: '#313131', category: 'Gaming' },
-  { name: 'Stremio', icon: 'stremio.png', url: 'https://www.stremio.com/StremioSetup.exe', filename: 'StremioSetup.exe', isComplex: true, color: '#7B2CBF', category: 'Media' },
-  { name: 'TuxlerVPN', icon: 'tuxler.png', url: 'https://cdn.tuxlervpn.com/windows/TuxlerVPNSetup.exe', filename: 'TuxlerVPNSetup.exe', isComplex: true, color: '#00D4AA', category: 'Security' },
-  { name: 'Logitech Manager', icon: 'logitech.png', url: 'https://raw.githubusercontent.com/DragosKissLove/tfy-electron2312/master/src/utils/LogitechManager.exe', filename: 'LogitechManager.exe', color: '#00B8FC', category: 'Utility' },
-  { name: 'Filter Keys Setter', icon: 'filterkeys.png', url: 'https://raw.githubusercontent.com/DragosKissLove/tfy-electron2312/master/src/utils/FilterKeysSetter.exe', filename: 'FilterKeysSetter.exe', color: '#9B59B6', category: 'Utility' },
-  { name: 'Geek Utility', icon: 'geek.png', url: 'https://raw.githubusercontent.com/DragosKissLove/tfy-electron2312/master/src/utils/geek.exe', filename: 'geek.exe', color: '#C0C0C0', category: 'Utility' },
-  { name: 'Visual Studio Code', icon: 'visual.png', url: 'https://update.code.visualstudio.com/latest/win32-x64-user/stable', filename: 'VSCodeSetup.exe', isComplex: true, color: '#007ACC', category: 'Development' }
+  { name: 'Spotify', icon: 'spotify.png', url: 'https://download.scdn.co/SpotifySetup.exe', filename: 'SpotifySetup.exe', isComplex: true, color: '#1DB954' },
+  { name: 'Steam', icon: 'steam.png', url: 'https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe', filename: 'SteamSetup.exe', isComplex: true, color: '#1B2838' },
+  { name: 'Discord', icon: 'discord.png', url: 'https://discord.com/api/download?platform=win', filename: 'DiscordSetup.exe', isComplex: true, color: '#5865F2' },
+  { name: 'Brave', icon: 'brave.png', url: 'https://referrals.brave.com/latest/BraveBrowserSetup.exe', filename: 'BraveBrowserSetup.exe', isComplex: true, color: '#FB542B' },
+  { name: 'Faceit AC', icon: 'faceit.png', url: 'https://cdn.faceit.com/faceit/anticheat/FaceitAC_1.0.17.36.exe', filename: 'FACEITInstaller_64.exe', isComplex: true, color: '#FF5500' },
+  { name: 'VLC', icon: 'vlc.png', url: 'https://get.videolan.org/vlc/3.0.20/win64/vlc-3.0.20-win64.exe', filename: 'vlc.exe', isComplex: true, color: '#FF8800' },
+  { name: 'Malwarebytes', icon: 'malwarebytes.png', url: 'https://downloads.malwarebytes.com/file/mb4_offline', filename: 'mbsetup.exe', isComplex: true, color: '#0078D4' },
+  { name: 'WinRAR', icon: 'winrar.png', url: 'https://www.rarlab.com/rar/winrar-x64-624.exe', filename: 'winrar.exe', isComplex: true, color: '#FFD700' },
+  { name: 'Epic Games', icon: 'epic.png', url: 'https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncherInstaller.msi', filename: 'epic_installer.msi', isComplex: true, color: '#313131' },
+  { name: 'Stremio', icon: 'stremio.png', url: 'https://www.stremio.com/StremioSetup.exe', filename: 'StremioSetup.exe', isComplex: true, color: '#7B2CBF' },
+  { name: 'TuxlerVPN', icon: 'tuxler.png', url: 'https://cdn.tuxlervpn.com/windows/TuxlerVPNSetup.exe', filename: 'TuxlerVPNSetup.exe', isComplex: true, color: '#00D4AA' },
+  { name: 'Logitech Manager', icon: 'logitech.png', url: 'https://raw.githubusercontent.com/DragosKissLove/tfy-electron2312/master/src/utils/LogitechManager.exe', filename: 'LogitechManager.exe', color: '#00B8FC' },
+  { name: 'Filter Keys Setter', icon: 'filterkeys.png', url: 'https://raw.githubusercontent.com/DragosKissLove/tfy-electron2312/master/src/utils/FilterKeysSetter.exe', filename: 'FilterKeysSetter.exe', color: '#9B59B6' },
+  { name: 'Geek Utility', icon: 'geek.png', url: 'https://raw.githubusercontent.com/DragosKissLove/tfy-electron2312/master/src/utils/geek.exe', filename: 'geek.exe', color: '#C0C0C0' },
+  { name: 'Visual Studio Code', icon: 'visual.png', url: 'https://update.code.visualstudio.com/latest/win32-x64-user/stable', filename: 'VSCodeSetup.exe', isComplex: true, color: '#007ACC' }
 ];
 
 const Apps = () => {
@@ -69,7 +69,7 @@ const Apps = () => {
         style={{
           fontSize: '28px',
           fontWeight: '600',
-          marginBottom: '20px',
+          marginBottom: '30px',
           color: '#FFFFFF',
           borderBottom: `2px solid ${primaryColor}`,
           paddingBottom: '10px',
@@ -80,13 +80,14 @@ const Apps = () => {
         Install Applications
       </motion.h2>
 
-      {/* Apps Grid */}
+      {/* Apps Grid with better spacing */}
       <motion.div
         layout
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-          gap: '20px'
+          gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+          gap: '24px',
+          maxWidth: '1400px'
         }}
       >
         {apps.map((app, index) => {
@@ -102,29 +103,30 @@ const Apps = () => {
               exit={{ opacity: 0, scale: 0.9 }}
               transition={{ 
                 duration: 0.3,
-                delay: index * 0.05,
+                delay: index * 0.03,
                 layout: { duration: 0.3 }
               }}
-              whileHover={{ y: -5 }}
+              whileHover={{ y: -8, scale: 1.02 }}
               style={{
-                background: `linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)`,
-                borderRadius: '16px',
-                padding: '20px',
-                border: `1px solid ${appColor}44`,
+                background: `linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%)`,
+                borderRadius: '20px',
+                padding: '24px',
+                border: `1px solid ${appColor}33`,
                 backdropFilter: 'blur(20px)',
                 WebkitBackdropFilter: 'blur(20px)',
                 position: 'relative',
                 overflow: 'hidden',
                 cursor: 'pointer',
-                boxShadow: `0 0 20px ${appColor}66, 0 8px 32px rgba(0, 0, 0, 0.3)`
+                boxShadow: `0 8px 32px ${appColor}40, 0 0 0 1px ${appColor}22`,
+                transition: 'all 0.4s ease'
               }}
               onClick={() => !isDownloading && installApp(app)}
             >
-              {/* Glowing border effect */}
+              {/* Enhanced glowing border effect */}
               <motion.div
                 animate={{
-                  opacity: [0.4, 0.8, 0.4],
-                  scale: [1, 1.02, 1]
+                  opacity: [0.4, 0.9, 0.4],
+                  scale: [1, 1.01, 1]
                 }}
                 transition={{
                   duration: 3,
@@ -133,14 +135,14 @@ const Apps = () => {
                 }}
                 style={{
                   position: 'absolute',
-                  inset: '-1px',
-                  borderRadius: '16px',
-                  padding: '1px',
+                  inset: '-2px',
+                  borderRadius: '20px',
+                  padding: '2px',
                   background: `linear-gradient(45deg, 
                     ${appColor}00 0%, 
-                    ${appColor}88 25%,
+                    ${appColor}66 25%,
                     ${appColor} 50%,
-                    ${appColor}88 75%,
+                    ${appColor}66 75%,
                     ${appColor}00 100%
                   )`,
                   mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
@@ -155,51 +157,54 @@ const Apps = () => {
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '16px',
-                marginBottom: '16px',
+                gap: '20px',
+                marginBottom: '20px',
                 position: 'relative',
                 zIndex: 1
               }}>
-                <div style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '12px',
-                  background: `linear-gradient(135deg, ${appColor}22, ${appColor}44)`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  position: 'relative'
-                }}>
+                <motion.div 
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  style={{
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: '16px',
+                    background: `linear-gradient(135deg, ${appColor}22, ${appColor}44)`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative',
+                    boxShadow: `0 8px 24px ${appColor}44`
+                  }}
+                >
                   <img
                     src={`icons/${app.icon}`}
                     alt={app.name}
                     style={{ 
-                      width: '32px', 
-                      height: '32px',
-                      borderRadius: '8px'
+                      width: '40px', 
+                      height: '40px',
+                      borderRadius: '10px'
                     }}
                   />
-                </div>
+                </motion.div>
                 
                 <div style={{ flex: 1 }}>
                   <h3 style={{
-                    fontSize: '18px',
-                    fontWeight: '600',
+                    fontSize: '20px',
+                    fontWeight: '700',
                     color: theme.text,
-                    margin: '0 0 4px 0'
+                    margin: '0 0 8px 0',
+                    letterSpacing: '0.5px'
                   }}>
                     {app.name}
                   </h3>
-                  <span style={{
-                    fontSize: '12px',
+                  <p style={{
+                    fontSize: '14px',
                     color: 'rgba(255, 255, 255, 0.6)',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    padding: '4px 8px',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(255, 255, 255, 0.2)'
+                    margin: 0,
+                    lineHeight: '1.4'
                   }}>
-                    {app.category}
-                  </span>
+                    Click to download and install
+                  </p>
                 </div>
               </div>
 
@@ -210,24 +215,25 @@ const Apps = () => {
                 disabled={isDownloading}
                 style={{
                   width: '100%',
-                  padding: '12px',
-                  borderRadius: '12px',
+                  padding: '14px',
+                  borderRadius: '14px',
                   border: 'none',
                   background: isDownloading 
                     ? 'rgba(255, 255, 255, 0.1)'
                     : `linear-gradient(135deg, ${appColor}, ${appColor}cc)`,
                   color: '#fff',
-                  fontSize: '14px',
+                  fontSize: '15px',
                   fontWeight: '600',
                   cursor: isDownloading ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '8px',
+                  gap: '10px',
                   opacity: isDownloading ? 0.7 : 1,
                   transition: 'all 0.3s ease',
                   position: 'relative',
-                  zIndex: 1
+                  zIndex: 1,
+                  boxShadow: isDownloading ? 'none' : `0 4px 16px ${appColor}44`
                 }}
               >
                 {isDownloading ? (
@@ -243,7 +249,7 @@ const Apps = () => {
                   </>
                 ) : (
                   <>
-                    <FiDownload size={16} />
+                    <FiDownload size={18} />
                     Install {app.name}
                   </>
                 )}
@@ -255,9 +261,9 @@ const Apps = () => {
                 top: 0,
                 left: 0,
                 right: 0,
-                height: '3px',
+                height: '4px',
                 background: `linear-gradient(90deg, ${appColor}, ${appColor}aa)`,
-                borderRadius: '16px 16px 0 0',
+                borderRadius: '20px 20px 0 0',
                 zIndex: 1
               }} />
             </motion.div>

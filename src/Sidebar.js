@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTheme } from './ThemeContext';
 import { motion } from 'framer-motion';
-import { FiGrid, FiTool, FiStar, FiSettings, FiInfo, FiLogOut } from 'react-icons/fi';
+import { FiGrid, FiTool, FiStar, FiSettings, FiInfo, FiLogOut, FiMessageCircle } from 'react-icons/fi';
 
 const tabs = [
   { id: 'Apps', icon: FiGrid, tooltip: 'Install Applications' },
@@ -17,6 +17,10 @@ const Sidebar = ({ active, onChange, user }) => {
   const handleLogout = () => {
     localStorage.removeItem('guestSession');
     window.location.replace(window.location.href);
+  };
+
+  const handleOpenDiscord = () => {
+    window.open('https://discord.gg/xDN3eSyfqU', '_blank');
   };
 
   const sidebarVariants = {
@@ -159,11 +163,69 @@ const Sidebar = ({ active, onChange, user }) => {
         display: 'flex', 
         flexDirection: 'column', 
         alignItems: 'center',
-        gap: 4,
+        gap: 12,
         marginTop: 'auto',
         marginBottom: 20,
         WebkitAppRegion: 'no-drag'
       }}>
+        {/* Discord Button */}
+        <motion.div
+          variants={itemVariants}
+          style={{ position: 'relative' }}
+          whileHover="hover"
+        >
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleOpenDiscord}
+            style={{
+              width: 48,
+              height: 48,
+              border: 'none',
+              borderRadius: '12px',
+              background: 'transparent',
+              color: '#5865F2',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              position: 'relative'
+            }}
+          >
+            <FiMessageCircle size={24} />
+          </motion.button>
+          
+          <motion.div
+            variants={{
+              hover: { opacity: 1, x: 60, transition: { duration: 0.2 } },
+              initial: { opacity: 0, x: 0 }
+            }}
+            initial="initial"
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'rgba(255, 255, 255, 0.03)',
+              padding: '8px 12px',
+              borderRadius: '8px',
+              fontSize: '14px',
+              color: theme.text,
+              pointerEvents: 'none',
+              whiteSpace: 'nowrap',
+              boxShadow: `0 4px 12px ${primaryColor}33`,
+              border: `1px solid ${primaryColor}22`,
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              zIndex: 1000
+            }}
+          >
+            Join Discord
+          </motion.div>
+        </motion.div>
+
+        {/* Logout Button */}
         <motion.button
           variants={itemVariants}
           whileHover={{ scale: 1.1 }}
@@ -185,6 +247,7 @@ const Sidebar = ({ active, onChange, user }) => {
         >
           <FiLogOut size={24} />
         </motion.button>
+        
         <motion.span
           variants={itemVariants}
           style={{

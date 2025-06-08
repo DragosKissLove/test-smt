@@ -1,14 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useTheme } from '../ThemeContext';
-import { FiMessageCircle, FiDownload, FiZap, FiTool } from 'react-icons/fi';
+import { FiDownload, FiZap, FiTool } from 'react-icons/fi';
 
 const About = () => {
   const { theme, primaryColor } = useTheme();
-
-  const handleOpenDiscord = () => {
-    window.open('https://discord.gg/xDN3eSyfqU', '_blank');
-  };
 
   const features = [
     {
@@ -30,7 +26,12 @@ const About = () => {
 
   return (
     <motion.div
-      style={{ padding: 30 }}
+      style={{ 
+        padding: 30,
+        height: '100vh',
+        overflowY: 'auto',
+        overflowX: 'hidden'
+      }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
@@ -39,7 +40,7 @@ const About = () => {
       <h2 style={{ 
         fontSize: '28px',
         fontWeight: '600',
-        marginBottom: '20px',
+        marginBottom: '30px',
         color: theme.text,
         borderBottom: `2px solid ${primaryColor}`,
         paddingBottom: '10px',
@@ -50,9 +51,9 @@ const About = () => {
       </h2>
       
       <div style={{
-        background: theme.cardBg,
-        padding: '24px',
-        borderRadius: '16px',
+        background: 'rgba(255, 255, 255, 0.03)',
+        padding: '32px',
+        borderRadius: '20px',
         border: `1px solid ${primaryColor}22`,
         marginBottom: '24px',
         position: 'relative',
@@ -72,7 +73,7 @@ const About = () => {
           style={{
             position: 'absolute',
             inset: 0,
-            borderRadius: '16px',
+            borderRadius: '20px',
             padding: '1px',
             background: `linear-gradient(90deg, 
               ${primaryColor}00 0%, 
@@ -130,7 +131,7 @@ const About = () => {
               transition={{ delay: index * 0.2 }}
               style={{
                 padding: '20px',
-                background: `linear-gradient(145deg, ${theme.cardBg}, ${primaryColor}11)`,
+                background: `linear-gradient(145deg, rgba(255, 255, 255, 0.05), ${primaryColor}11)`,
                 borderRadius: '12px',
                 border: `1px solid ${primaryColor}22`,
                 display: 'flex',
@@ -174,30 +175,6 @@ const About = () => {
           ))}
         </div>
       </div>
-
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={handleOpenDiscord}
-        style={{
-          padding: '12px 24px',
-          background: theme.cardBg,
-          border: `1px solid ${primaryColor}22`,
-          borderRadius: '12px',
-          color: theme.text,
-          cursor: 'pointer',
-          fontSize: '15px',
-          fontWeight: 500,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          boxShadow: `0 0 20px ${primaryColor}40`,
-          transition: 'all 0.3s ease'
-        }}
-      >
-        <FiMessageCircle style={{ color: primaryColor }} />
-        Join Our Discord
-      </motion.button>
     </motion.div>
   );
 };
