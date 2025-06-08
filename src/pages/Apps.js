@@ -23,7 +23,7 @@ const apps = [
   { name: 'TuxlerVPN', icon: 'tuxler.png', url: 'https://cdn.tuxlervpn.com/windows/TuxlerVPNSetup.exe', filename: 'TuxlerVPNSetup.exe', isComplex: true, color: '#00D4AA', category: 'Security' },
   { name: 'Logitech Manager', icon: 'logitech.png', url: 'https://raw.githubusercontent.com/DragosKissLove/tfy-electron2312/master/src/utils/LogitechManager.exe', filename: 'LogitechManager.exe', color: '#00B8FC', category: 'Utility' },
   { name: 'Filter Keys Setter', icon: 'filterkeys.png', url: 'https://raw.githubusercontent.com/DragosKissLove/tfy-electron2312/master/src/utils/FilterKeysSetter.exe', filename: 'FilterKeysSetter.exe', color: '#9B59B6', category: 'Utility' },
-  { name: 'Geek Utility', icon: 'geek.png', url: 'https://raw.githubusercontent.com/DragosKissLove/tfy-electron2312/master/src/utils/geek.exe', filename: 'geek.exe', color: '#E74C3C', category: 'Utility' },
+  { name: 'Geek Utility', icon: 'geek.png', url: 'https://raw.githubusercontent.com/DragosKissLove/tfy-electron2312/master/src/utils/geek.exe', filename: 'geek.exe', color: '#C0C0C0', category: 'Utility' },
   { name: 'Visual Studio Code', icon: 'visual.png', url: 'https://update.code.visualstudio.com/latest/win32-x64-user/stable', filename: 'VSCodeSetup.exe', isComplex: true, color: '#007ACC', category: 'Development' }
 ];
 
@@ -110,21 +110,55 @@ const Apps = () => {
                 background: `linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)`,
                 borderRadius: '16px',
                 padding: '20px',
-                border: `1px solid rgba(255, 255, 255, 0.2)`,
+                border: `1px solid ${appColor}44`,
                 backdropFilter: 'blur(20px)',
                 WebkitBackdropFilter: 'blur(20px)',
                 position: 'relative',
                 overflow: 'hidden',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                boxShadow: `0 0 20px ${appColor}66, 0 8px 32px rgba(0, 0, 0, 0.3)`
               }}
               onClick={() => !isDownloading && installApp(app)}
             >
+              {/* Glowing border effect */}
+              <motion.div
+                animate={{
+                  opacity: [0.4, 0.8, 0.4],
+                  scale: [1, 1.02, 1]
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  repeatType: "reverse"
+                }}
+                style={{
+                  position: 'absolute',
+                  inset: '-1px',
+                  borderRadius: '16px',
+                  padding: '1px',
+                  background: `linear-gradient(45deg, 
+                    ${appColor}00 0%, 
+                    ${appColor}88 25%,
+                    ${appColor} 50%,
+                    ${appColor}88 75%,
+                    ${appColor}00 100%
+                  )`,
+                  mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                  maskComposite: 'exclude',
+                  WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                  WebkitMaskComposite: 'exclude',
+                  pointerEvents: 'none'
+                }}
+              />
+
               {/* App Icon and Info */}
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '16px',
-                marginBottom: '16px'
+                marginBottom: '16px',
+                position: 'relative',
+                zIndex: 1
               }}>
                 <div style={{
                   width: '48px',
@@ -191,7 +225,9 @@ const Apps = () => {
                   justifyContent: 'center',
                   gap: '8px',
                   opacity: isDownloading ? 0.7 : 1,
-                  transition: 'all 0.3s ease'
+                  transition: 'all 0.3s ease',
+                  position: 'relative',
+                  zIndex: 1
                 }}
               >
                 {isDownloading ? (
@@ -221,7 +257,8 @@ const Apps = () => {
                 right: 0,
                 height: '3px',
                 background: `linear-gradient(90deg, ${appColor}, ${appColor}aa)`,
-                borderRadius: '16px 16px 0 0'
+                borderRadius: '16px 16px 0 0',
+                zIndex: 1
               }} />
             </motion.div>
           );

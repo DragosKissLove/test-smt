@@ -46,14 +46,14 @@ const About = () => {
         display: 'inline-block',
         position: 'relative'
       }}>
-        About
+        Info
       </h2>
       
       <div style={{
         background: theme.cardBg,
         padding: '24px',
         borderRadius: '16px',
-        border: `1px solid ${theme.border}`,
+        border: `1px solid ${primaryColor}22`,
         marginBottom: '24px',
         position: 'relative',
         overflow: 'hidden'
@@ -90,7 +90,9 @@ const About = () => {
           transition={{ duration: 0.6 }}
           style={{
             textAlign: 'center',
-            marginBottom: '30px'
+            marginBottom: '30px',
+            position: 'relative',
+            zIndex: 1
           }}
         >
           <h3 style={{ 
@@ -116,7 +118,9 @@ const About = () => {
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
           gap: '20px',
-          marginTop: '30px'
+          marginTop: '30px',
+          position: 'relative',
+          zIndex: 1
         }}>
           {features.map((feature, index) => (
             <motion.div
@@ -178,7 +182,7 @@ const About = () => {
         style={{
           padding: '12px 24px',
           background: theme.cardBg,
-          border: `1px solid ${theme.border}`,
+          border: `1px solid ${primaryColor}22`,
           borderRadius: '12px',
           color: theme.text,
           cursor: 'pointer',

@@ -95,7 +95,7 @@ const Extra = () => {
         padding: '24px',
         borderRadius: '16px',
         background: theme.cardBg,
-        border: `1px solid ${theme.border}`,
+        border: `1px solid ${primaryColor}22`,
         position: 'relative',
         overflow: 'hidden',
         marginBottom: '24px'
@@ -177,7 +177,7 @@ const Extra = () => {
           style={{
             padding: '12px 24px',
             background: isDownloading ? theme.cardBg : primaryColor,
-            border: `1px solid ${theme.border}`,
+            border: `1px solid ${primaryColor}22`,
             borderRadius: '12px',
             color: isDownloading ? theme.text : '#FFF',
             cursor: isDownloading ? 'not-allowed' : 'pointer',
@@ -332,7 +332,7 @@ const Extra = () => {
                 padding: '12px',
                 borderRadius: '8px',
                 background: theme.cardBg,
-                border: `1px solid ${theme.border}`,
+                border: `1px solid ${primaryColor}22`,
                 position: 'relative',
                 zIndex: 1
               }}

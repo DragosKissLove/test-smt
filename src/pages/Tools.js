@@ -127,7 +127,7 @@ const Tools = () => {
           background: theme.cardBg,
           padding: '24px',
           borderRadius: '16px',
-          border: `1px solid ${theme.border}`,
+          border: `1px solid ${primaryColor}22`,
           marginBottom: '24px',
           position: 'relative',
           overflow: 'hidden'
@@ -164,7 +164,9 @@ const Tools = () => {
           fontWeight: '600',
           marginBottom: '20px',
           color: primaryColor,
-          filter: `drop-shadow(0 0 10px ${primaryColor}66)`
+          filter: `drop-shadow(0 0 10px ${primaryColor}66)`,
+          position: 'relative',
+          zIndex: 1
         }}>
           System Tools
         </h3>
@@ -172,7 +174,9 @@ const Tools = () => {
         <div style={{ 
           display: 'grid', 
           gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-          gap: '16px'
+          gap: '16px',
+          position: 'relative',
+          zIndex: 1
         }}>
           <AnimatePresence mode="popLayout">
             {tools.map((tool, index) => (
@@ -257,7 +261,7 @@ const Tools = () => {
           background: theme.cardBg,
           padding: '24px',
           borderRadius: '16px',
-          border: `1px solid ${theme.border}`,
+          border: `1px solid ${primaryColor}22`,
           marginBottom: '24px',
           position: 'relative',
           overflow: 'hidden'
@@ -445,7 +449,7 @@ const Tools = () => {
               padding: '16px',
               borderRadius: '12px',
               background: theme.cardBg,
-              border: `1px solid ${theme.border}`,
+              border: `1px solid ${primaryColor}22`,
               color: theme.text,
               boxShadow: `0 0 20px ${primaryColor}33`
             }}
