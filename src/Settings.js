@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from './ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiRefreshCw, FiPalette, FiMonitor, FiInfo, FiCheck } from 'react-icons/fi';
+import { FiRefreshCw, FiBrush, FiMonitor, FiInfo, FiCheck } from 'react-icons/fi';
 import UpdateNotification from './components/UpdateNotification';
 
 const colorPresets = [
@@ -145,7 +145,7 @@ const Settings = () => {
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <FiPalette size={20} color={primaryColor} />
+              <FiBrush size={20} color={primaryColor} />
             </div>
             <div>
               <h3 style={{ 
