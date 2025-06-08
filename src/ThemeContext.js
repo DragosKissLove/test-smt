@@ -16,7 +16,7 @@ const ThemeContext = createContext();
 export const ThemeProvider = ({ children }) => {
   const [primaryColor, setPrimaryColor] = useState(() => {
     const savedColor = localStorage.getItem('primaryColor');
-    return savedColor || '#DC2626'; // Changed to red
+    return savedColor || '#DC2626'; // Red as default
   });
 
   useEffect(() => {

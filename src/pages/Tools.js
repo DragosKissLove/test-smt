@@ -1,26 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '../ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiZap, FiTool, FiDownload, FiShield, FiTrash2, FiBox, FiEye, FiSearch, FiPrinter, FiBell, FiMonitor, FiWifi, FiBluetooth, FiLayers, FiPlay } from 'react-icons/fi';
 import { invoke } from '@tauri-apps/api/tauri';
+import { ring } from 'ldrs';
+
+// Register the ring component
+ring.register();
 
 const tools = [
   { name: 'WinRAR Crack', function: 'winrar_crack', icon: FiDownload },
   { name: 'WiFi Passwords', function: 'wifi_passwords', icon: FiShield },
   { name: 'Activate Windows', function: 'activate_windows', icon: FiBox },
-  { name: 'TFY Optimizations', function: 'run_optimization', icon: FiZap },
-  { name: 'Clean Temp Files', function: 'clean_temp', icon: FiTrash2 },
-  { name: 'Atlas Tools', function: 'install_atlas_tools', icon: FiTool }
+  { name: 'TFY Optimizations', function: 'run_optimization', icon: FiZap, isComplex: true },
+  { name: 'Clean Temp Files', function: 'clean_temp', icon: FiTrash2, isComplex: true },
+  { name: 'Atlas Tools', function: 'install_atlas_tools', icon: FiTool, isComplex: true }
 ];
 
 const windowsFeatures = [
   { name: 'Windows Visual Effects', key: 'visual_effects', icon: FiEye },
-  { name: 'Search Indexing', key: 'search_indexing', icon: FiSearch },
-  { name: 'Printing Service', key: 'printing', icon: FiPrinter },
+  { name: 'Search Indexing', key: 'search_indexing', icon: FiSearch, isComplex: true },
+  { name: 'Printing Service', key: 'printing', icon: FiPrinter, isComplex: true },
   { name: 'Notifications', key: 'notifications', icon: FiBell },
   { name: 'FSO & Game Bar', key: 'fso_gamebar', icon: FiMonitor },
-  { name: 'VPN Service', key: 'vpn', icon: FiWifi },
-  { name: 'Bluetooth', key: 'bluetooth', icon: FiBluetooth },
+  { name: 'VPN Service', key: 'vpn', icon: FiWifi, isComplex: true },
+  { name: 'Bluetooth', key: 'bluetooth', icon: FiBluetooth, isComplex: true },
   { name: 'Background Apps', key: 'background_apps', icon: FiLayers },
   { name: 'Game Mode', key: 'game_mode', icon: FiPlay }
 ];
@@ -41,7 +45,7 @@ const Tools = () => {
     game_mode: true
   });
 
-  const handleClick = async (funcName) => {
+  const handleClick = async (funcName, isComplex = false) => {
     try {
       setActiveButton(funcName);
       setStatus('Processing...');
@@ -54,7 +58,7 @@ const Tools = () => {
     }
   };
 
-  const handleFeatureToggle = async (featureKey) => {
+  const handleFeatureToggle = async (featureKey, isComplex = false) => {
     const newState = !featureStates[featureKey];
     setFeatureStates(prev => ({
       ...prev,
@@ -199,7 +203,7 @@ const Tools = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.2, delay: index * 0.05 }}
-                onClick={() => handleClick(tool.function)}
+                onClick={() => handleClick(tool.function, tool.isComplex)}
                 style={{
                   height: '60px',
                   borderRadius: '12px',
@@ -230,20 +234,35 @@ const Tools = () => {
                 }} />
                 {tool.name}
                 {activeButton === tool.function && (
-                  <motion.div
-                    initial={{ scale: 0.8 }}
-                    animate={{ scale: 1, rotate: 360 }}
-                    transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-                    style={{
-                      position: 'absolute',
-                      right: '20px',
-                      width: '20px',
-                      height: '20px',
-                      border: `2px solid ${primaryColor}`,
-                      borderTopColor: 'transparent',
-                      borderRadius: '50%'
-                    }}
-                  />
+                  <div style={{
+                    position: 'absolute',
+                    right: '20px',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}>
+                    {tool.isComplex ? (
+                      <l-ring
+                        size="20"
+                        stroke="3"
+                        bg-opacity="0"
+                        speed="2"
+                        color={primaryColor}
+                      />
+                    ) : (
+                      <motion.div
+                        initial={{ scale: 0.8 }}
+                        animate={{ scale: 1, rotate: 360 }}
+                        transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          border: `2px solid ${primaryColor}`,
+                          borderTopColor: 'transparent',
+                          borderRadius: '50%'
+                        }}
+                      />
+                    )}
+                  </div>
                 )}
               </motion.button>
             ))}
@@ -377,46 +396,60 @@ const Tools = () => {
                 </span>
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => handleFeatureToggle(feature.key)}
-                style={{
-                  width: '50px',
-                  height: '26px',
-                  borderRadius: '13px',
-                  border: 'none',
-                  background: featureStates[feature.key] 
-                    ? `linear-gradient(135deg, ${primaryColor}, ${primaryColor}cc)`
-                    : 'rgba(255, 255, 255, 0.1)',
-                  cursor: 'pointer',
-                  position: 'relative',
-                  transition: 'all 0.3s ease',
-                  boxShadow: featureStates[feature.key] 
-                    ? `0 0 16px ${primaryColor}88, inset 0 0 8px ${primaryColor}44`
-                    : '0 0 8px rgba(0, 0, 0, 0.2)',
-                  zIndex: 1
-                }}
-              >
-                <motion.div
-                  animate={{
-                    x: featureStates[feature.key] ? 24 : 0
-                  }}
-                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative', zIndex: 1 }}>
+                {/* Loading indicator for complex operations */}
+                {activeButton === `${featureStates[feature.key] ? 'disable' : 'enable'}_${feature.key}` && feature.isComplex && (
+                  <l-ring
+                    size="20"
+                    stroke="3"
+                    bg-opacity="0"
+                    speed="2"
+                    color={primaryColor}
+                  />
+                )}
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handleFeatureToggle(feature.key, feature.isComplex)}
+                  disabled={activeButton === `${featureStates[feature.key] ? 'disable' : 'enable'}_${feature.key}`}
                   style={{
-                    width: '22px',
-                    height: '22px',
-                    borderRadius: '11px',
-                    background: '#fff',
-                    position: 'absolute',
-                    top: '2px',
-                    left: '2px',
-                    boxShadow: featureStates[feature.key]
-                      ? `0 2px 8px rgba(0, 0, 0, 0.3), 0 0 4px ${primaryColor}66`
-                      : '0 2px 4px rgba(0, 0, 0, 0.2)'
+                    width: '50px',
+                    height: '26px',
+                    borderRadius: '13px',
+                    border: 'none',
+                    background: featureStates[feature.key] 
+                      ? `linear-gradient(135deg, ${primaryColor}, ${primaryColor}cc)`
+                      : 'rgba(255, 255, 255, 0.1)',
+                    cursor: activeButton === `${featureStates[feature.key] ? 'disable' : 'enable'}_${feature.key}` ? 'not-allowed' : 'pointer',
+                    position: 'relative',
+                    transition: 'all 0.3s ease',
+                    boxShadow: featureStates[feature.key] 
+                      ? `0 0 16px ${primaryColor}88, inset 0 0 8px ${primaryColor}44`
+                      : '0 0 8px rgba(0, 0, 0, 0.2)',
+                    opacity: activeButton === `${featureStates[feature.key] ? 'disable' : 'enable'}_${feature.key}` ? 0.7 : 1
                   }}
-                />
-              </motion.button>
+                >
+                  <motion.div
+                    animate={{
+                      x: featureStates[feature.key] ? 24 : 0
+                    }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    style={{
+                      width: '22px',
+                      height: '22px',
+                      borderRadius: '11px',
+                      background: '#fff',
+                      position: 'absolute',
+                      top: '2px',
+                      left: '2px',
+                      boxShadow: featureStates[feature.key]
+                        ? `0 2px 8px rgba(0, 0, 0, 0.3), 0 0 4px ${primaryColor}66`
+                        : '0 2px 4px rgba(0, 0, 0, 0.2)'
+                    }}
+                  />
+                </motion.button>
+              </div>
             </motion.div>
           ))}
         </div>
