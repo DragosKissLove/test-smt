@@ -80,14 +80,14 @@ const Apps = () => {
         Install Applications
       </motion.h2>
 
-      {/* Apps Grid with better spacing */}
+      {/* Compact Apps Grid */}
       <motion.div
         layout
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-          gap: '24px',
-          maxWidth: '1400px'
+          gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+          gap: '16px',
+          maxWidth: '1200px'
         }}
       >
         {apps.map((app, index) => {
@@ -103,30 +103,30 @@ const Apps = () => {
               exit={{ opacity: 0, scale: 0.9 }}
               transition={{ 
                 duration: 0.3,
-                delay: index * 0.03,
+                delay: index * 0.02,
                 layout: { duration: 0.3 }
               }}
-              whileHover={{ y: -8, scale: 1.02 }}
+              whileHover={{ y: -4, scale: 1.01 }}
               style={{
-                background: `linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%)`,
-                borderRadius: '20px',
-                padding: '24px',
+                background: `linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%)`,
+                borderRadius: '16px',
+                padding: '16px',
                 border: `1px solid ${appColor}33`,
                 backdropFilter: 'blur(20px)',
                 WebkitBackdropFilter: 'blur(20px)',
                 position: 'relative',
                 overflow: 'hidden',
                 cursor: 'pointer',
-                boxShadow: `0 8px 32px ${appColor}40, 0 0 0 1px ${appColor}22`,
-                transition: 'all 0.4s ease'
+                boxShadow: `0 4px 16px ${appColor}30, 0 0 0 1px ${appColor}22`,
+                transition: 'all 0.3s ease'
               }}
               onClick={() => !isDownloading && installApp(app)}
             >
-              {/* Enhanced glowing border effect */}
+              {/* Glowing border effect */}
               <motion.div
                 animate={{
-                  opacity: [0.4, 0.9, 0.4],
-                  scale: [1, 1.01, 1]
+                  opacity: [0.3, 0.7, 0.3],
+                  scale: [1, 1.005, 1]
                 }}
                 transition={{
                   duration: 3,
@@ -135,9 +135,9 @@ const Apps = () => {
                 }}
                 style={{
                   position: 'absolute',
-                  inset: '-2px',
-                  borderRadius: '20px',
-                  padding: '2px',
+                  inset: '-1px',
+                  borderRadius: '16px',
+                  padding: '1px',
                   background: `linear-gradient(45deg, 
                     ${appColor}00 0%, 
                     ${appColor}66 25%,
@@ -157,100 +157,104 @@ const Apps = () => {
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '20px',
-                marginBottom: '20px',
+                gap: '12px',
+                marginBottom: '12px',
                 position: 'relative',
                 zIndex: 1
               }}>
                 <motion.div 
-                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  whileHover={{ scale: 1.05 }}
                   style={{
-                    width: '56px',
-                    height: '56px',
-                    borderRadius: '16px',
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '10px',
                     background: `linear-gradient(135deg, ${appColor}22, ${appColor}44)`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     position: 'relative',
-                    boxShadow: `0 8px 24px ${appColor}44`
+                    boxShadow: `0 4px 12px ${appColor}40`
                   }}
                 >
                   <img
                     src={`icons/${app.icon}`}
                     alt={app.name}
                     style={{ 
-                      width: '40px', 
-                      height: '40px',
-                      borderRadius: '10px'
+                      width: '28px', 
+                      height: '28px',
+                      borderRadius: '6px'
                     }}
                   />
                 </motion.div>
                 
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <h3 style={{
-                    fontSize: '20px',
-                    fontWeight: '700',
+                    fontSize: '16px',
+                    fontWeight: '600',
                     color: theme.text,
-                    margin: '0 0 8px 0',
-                    letterSpacing: '0.5px'
+                    margin: '0 0 2px 0',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
                   }}>
                     {app.name}
                   </h3>
                   <p style={{
-                    fontSize: '14px',
-                    color: 'rgba(255, 255, 255, 0.6)',
+                    fontSize: '12px',
+                    color: 'rgba(255, 255, 255, 0.5)',
                     margin: 0,
-                    lineHeight: '1.4'
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
                   }}>
-                    Click to download and install
+                    Ready to install
                   </p>
                 </div>
               </div>
 
-              {/* Download Button */}
+              {/* Compact Download Button */}
               <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
                 disabled={isDownloading}
                 style={{
                   width: '100%',
-                  padding: '14px',
-                  borderRadius: '14px',
+                  padding: '10px',
+                  borderRadius: '10px',
                   border: 'none',
                   background: isDownloading 
                     ? 'rgba(255, 255, 255, 0.1)'
                     : `linear-gradient(135deg, ${appColor}, ${appColor}cc)`,
                   color: '#fff',
-                  fontSize: '15px',
+                  fontSize: '13px',
                   fontWeight: '600',
                   cursor: isDownloading ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '10px',
+                  gap: '6px',
                   opacity: isDownloading ? 0.7 : 1,
                   transition: 'all 0.3s ease',
                   position: 'relative',
                   zIndex: 1,
-                  boxShadow: isDownloading ? 'none' : `0 4px 16px ${appColor}44`
+                  boxShadow: isDownloading ? 'none' : `0 2px 8px ${appColor}40`
                 }}
               >
                 {isDownloading ? (
                   <>
                     <l-ring
-                      size="20"
-                      stroke="3"
+                      size="16"
+                      stroke="2"
                       bg-opacity="0"
                       speed="2"
                       color="#fff"
                     />
-                    Downloading...
+                    Installing...
                   </>
                 ) : (
                   <>
-                    <FiDownload size={18} />
-                    Install {app.name}
+                    <FiDownload size={14} />
+                    Install
                   </>
                 )}
               </motion.button>
@@ -261,9 +265,9 @@ const Apps = () => {
                 top: 0,
                 left: 0,
                 right: 0,
-                height: '4px',
+                height: '2px',
                 background: `linear-gradient(90deg, ${appColor}, ${appColor}aa)`,
-                borderRadius: '20px 20px 0 0',
+                borderRadius: '16px 16px 0 0',
                 zIndex: 1
               }} />
             </motion.div>
