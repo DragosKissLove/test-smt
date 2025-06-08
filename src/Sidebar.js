@@ -8,7 +8,7 @@ const tabs = [
   { id: 'Tools', icon: FiTool, tooltip: 'System Tools' },
   { id: 'Extra', icon: FiStar, tooltip: 'Extra Features' },
   { id: 'Settings', icon: FiSettings, tooltip: 'Preferences' },
-  { id: 'About', icon: FiInfo, tooltip: 'About' }
+  { id: 'About', icon: FiInfo, tooltip: 'Info' }
 ];
 
 const Sidebar = ({ active, onChange, user }) => {

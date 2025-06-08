@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from './ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiRefreshCw, FiDroplet, FiMonitor, FiInfo, FiCheck, FiUser, FiSettings, FiDownload, FiStar } from 'react-icons/fi';
+import { FiRefreshCw, FiDroplet, FiMonitor, FiInfo, FiCheck, FiUser, FiSettings, FiDownload, FiStar, FiCpu, FiHardDrive } from 'react-icons/fi';
 import UpdateNotification from './components/UpdateNotification';
 
 const colorPresets = [
@@ -24,24 +24,74 @@ const Settings = () => {
   const [selectedPreset, setSelectedPreset] = useState(null);
   const [username, setUsername] = useState('User');
   const [activeSection, setActiveSection] = useState('appearance');
+  const [systemInfo, setSystemInfo] = useState({
+    cpu: 'Loading...',
+    ram: 'Loading...',
+    gpu: 'Loading...',
+    os: 'Loading...',
+    platform: 'Loading...'
+  });
 
   useEffect(() => {
     // Find which preset matches current color
     const preset = colorPresets.find(p => p.color === primaryColor);
     setSelectedPreset(preset?.name || 'Custom');
 
-    // Get username using electron function
-    const getUsername = async () => {
+    // Get username and system info using electron function
+    const getSystemInfo = async () => {
       try {
         if (window.electron && window.electron.runFunction) {
           const result = await window.electron.runFunction('getUsername');
           setUsername(result || 'User');
         }
+        
+        // Get system information
+        if (navigator.userAgent) {
+          const userAgent = navigator.userAgent;
+          let osInfo = 'Unknown OS';
+          
+          if (userAgent.includes('Windows NT 10.0')) osInfo = 'Windows 10/11';
+          else if (userAgent.includes('Windows NT 6.3')) osInfo = 'Windows 8.1';
+          else if (userAgent.includes('Windows NT 6.2')) osInfo = 'Windows 8';
+          else if (userAgent.includes('Windows NT 6.1')) osInfo = 'Windows 7';
+          else if (userAgent.includes('Windows')) osInfo = 'Windows';
+          
+          setSystemInfo(prev => ({
+            ...prev,
+            os: osInfo,
+            platform: navigator.platform || 'Unknown',
+            ram: `${Math.round(navigator.deviceMemory || 0)}GB` || 'Unknown',
+            cpu: navigator.hardwareConcurrency ? `${navigator.hardwareConcurrency} cores` : 'Unknown'
+          }));
+        }
+
+        // Try to get GPU info
+        if (navigator.gpu) {
+          try {
+            const adapter = await navigator.gpu.requestAdapter();
+            if (adapter) {
+              setSystemInfo(prev => ({
+                ...prev,
+                gpu: 'WebGPU Compatible'
+              }));
+            }
+          } catch (e) {
+            setSystemInfo(prev => ({
+              ...prev,
+              gpu: 'DirectX/OpenGL'
+            }));
+          }
+        } else {
+          setSystemInfo(prev => ({
+            ...prev,
+            gpu: 'DirectX/OpenGL'
+          }));
+        }
       } catch (error) {
-        console.error('Error getting username:', error);
+        console.error('Error getting system info:', error);
       }
     };
-    getUsername();
+    getSystemInfo();
 
     if (window.electron) {
       window.electron.onUpdateStatus((event, message) => {
@@ -100,7 +150,7 @@ const Settings = () => {
   const sections = [
     { id: 'appearance', name: 'Appearance', icon: FiDroplet },
     { id: 'updates', name: 'Updates', icon: FiDownload },
-    { id: 'about', name: 'About', icon: FiInfo }
+    { id: 'info', name: 'Info', icon: FiInfo }
   ];
 
   return (
@@ -133,9 +183,30 @@ const Settings = () => {
             background: `linear-gradient(135deg, ${primaryColor}15, ${primaryColor}08)`,
             border: `1px solid ${primaryColor}30`,
             marginBottom: '30px',
-            textAlign: 'center'
+            textAlign: 'center',
+            position: 'relative',
+            overflow: 'hidden'
           }}
         >
+          {/* Animated glow effect */}
+          <motion.div
+            animate={{
+              opacity: [0.3, 0.6, 0.3],
+              scale: [1, 1.1, 1]
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              repeatType: "reverse"
+            }}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: `radial-gradient(circle at center, ${primaryColor}22 0%, transparent 70%)`,
+              pointerEvents: 'none'
+            }}
+          />
+          
           <div style={{
             width: '60px',
             height: '60px',
@@ -145,7 +216,9 @@ const Settings = () => {
             alignItems: 'center',
             justifyContent: 'center',
             margin: '0 auto 12px',
-            boxShadow: `0 8px 32px ${primaryColor}40`
+            boxShadow: `0 8px 32px ${primaryColor}40`,
+            position: 'relative',
+            zIndex: 1
           }}>
             <FiUser size={28} color="#fff" />
           </div>
@@ -153,14 +226,18 @@ const Settings = () => {
             fontSize: '18px',
             fontWeight: '600',
             margin: '0 0 4px 0',
-            color: theme.text
+            color: theme.text,
+            position: 'relative',
+            zIndex: 1
           }}>
             {username}
           </h3>
           <p style={{
             fontSize: '14px',
             color: `${theme.text}80`,
-            margin: 0
+            margin: 0,
+            position: 'relative',
+            zIndex: 1
           }}>
             TFY Tool User
           </p>
@@ -214,37 +291,6 @@ const Settings = () => {
             </motion.button>
           ))}
         </div>
-
-        {/* Version Info */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          style={{
-            marginTop: 'auto',
-            padding: '16px',
-            borderRadius: '12px',
-            background: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            textAlign: 'center'
-          }}
-        >
-          <p style={{
-            fontSize: '12px',
-            color: `${theme.text}60`,
-            margin: '0 0 4px 0'
-          }}>
-            TFY Tool
-          </p>
-          <p style={{
-            fontSize: '14px',
-            fontWeight: '600',
-            color: primaryColor,
-            margin: 0
-          }}>
-            v3.0.0
-          </p>
-        </motion.div>
       </motion.div>
 
       {/* Main Content */}
@@ -547,9 +593,9 @@ const Settings = () => {
             </motion.div>
           )}
 
-          {activeSection === 'about' && (
+          {activeSection === 'info' && (
             <motion.div
-              key="about"
+              key="info"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
@@ -563,7 +609,7 @@ const Settings = () => {
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent'
               }}>
-                About
+                Info
               </h1>
               <p style={{
                 fontSize: '16px',
@@ -584,14 +630,32 @@ const Settings = () => {
                   padding: '32px',
                   border: '1px solid rgba(255, 255, 255, 0.1)'
                 }}>
-                  <h3 style={{
-                    fontSize: '20px',
-                    fontWeight: '600',
-                    margin: '0 0 20px 0',
-                    color: theme.text
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    marginBottom: '24px'
                   }}>
-                    Application Info
-                  </h3>
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '12px',
+                      background: `linear-gradient(135deg, ${primaryColor}20, ${primaryColor}40)`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <FiSettings size={20} color={primaryColor} />
+                    </div>
+                    <h3 style={{
+                      fontSize: '20px',
+                      fontWeight: '600',
+                      margin: 0,
+                      color: theme.text
+                    }}>
+                      Application Info
+                    </h3>
+                  </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div style={{
                       display: 'flex',
@@ -617,10 +681,20 @@ const Settings = () => {
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
+                      padding: '12px 0',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+                    }}>
+                      <span style={{ color: `${theme.text}80` }}>Runtime</span>
+                      <span style={{ fontWeight: '600', color: theme.text }}>Electron</span>
+                    </div>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
                       padding: '12px 0'
                     }}>
-                      <span style={{ color: `${theme.text}80` }}>Platform</span>
-                      <span style={{ fontWeight: '600', color: theme.text }}>Windows</span>
+                      <span style={{ color: `${theme.text}80` }}>Theme</span>
+                      <span style={{ fontWeight: '600', color: primaryColor }}>{selectedPreset}</span>
                     </div>
                   </div>
                 </div>
@@ -631,14 +705,32 @@ const Settings = () => {
                   padding: '32px',
                   border: '1px solid rgba(255, 255, 255, 0.1)'
                 }}>
-                  <h3 style={{
-                    fontSize: '20px',
-                    fontWeight: '600',
-                    margin: '0 0 20px 0',
-                    color: theme.text
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    marginBottom: '24px'
                   }}>
-                    System Info
-                  </h3>
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '12px',
+                      background: `linear-gradient(135deg, ${primaryColor}20, ${primaryColor}40)`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <FiCpu size={20} color={primaryColor} />
+                    </div>
+                    <h3 style={{
+                      fontSize: '20px',
+                      fontWeight: '600',
+                      margin: 0,
+                      color: theme.text
+                    }}>
+                      System Info
+                    </h3>
+                  </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div style={{
                       display: 'flex',
@@ -657,8 +749,38 @@ const Settings = () => {
                       padding: '12px 0',
                       borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
                     }}>
-                      <span style={{ color: `${theme.text}80` }}>Theme</span>
-                      <span style={{ fontWeight: '600', color: primaryColor }}>{selectedPreset}</span>
+                      <span style={{ color: `${theme.text}80` }}>Operating System</span>
+                      <span style={{ fontWeight: '600', color: theme.text }}>{systemInfo.os}</span>
+                    </div>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 0',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+                    }}>
+                      <span style={{ color: `${theme.text}80` }}>Platform</span>
+                      <span style={{ fontWeight: '600', color: theme.text }}>{systemInfo.platform}</span>
+                    </div>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 0',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+                    }}>
+                      <span style={{ color: `${theme.text}80` }}>CPU Cores</span>
+                      <span style={{ fontWeight: '600', color: theme.text }}>{systemInfo.cpu}</span>
+                    </div>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 0',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+                    }}>
+                      <span style={{ color: `${theme.text}80` }}>Memory</span>
+                      <span style={{ fontWeight: '600', color: theme.text }}>{systemInfo.ram}</span>
                     </div>
                     <div style={{
                       display: 'flex',
@@ -666,8 +788,8 @@ const Settings = () => {
                       alignItems: 'center',
                       padding: '12px 0'
                     }}>
-                      <span style={{ color: `${theme.text}80` }}>Runtime</span>
-                      <span style={{ fontWeight: '600', color: theme.text }}>Electron</span>
+                      <span style={{ color: `${theme.text}80` }}>Graphics</span>
+                      <span style={{ fontWeight: '600', color: theme.text }}>{systemInfo.gpu}</span>
                     </div>
                   </div>
                 </div>
