@@ -171,7 +171,7 @@ const Settings = () => {
           backdropFilter: 'blur(20px)'
         }}
       >
-        {/* User Profile - Simplified with only floating particles */}
+        {/* User Profile - Only floating particles */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -417,7 +417,7 @@ const Settings = () => {
                   ))}
                 </div>
 
-                {/* Custom Color Picker */}
+                {/* Custom Color Picker - Made smaller */}
                 <div style={{
                   padding: '24px',
                   borderRadius: '16px',
@@ -442,10 +442,10 @@ const Settings = () => {
                       value={primaryColor}
                       onChange={handleColorChange}
                       style={{
-                        width: '60px',
-                        height: '60px',
+                        width: '40px',
+                        height: '40px',
                         border: 'none',
-                        borderRadius: '16px',
+                        borderRadius: '12px',
                         cursor: 'pointer',
                         background: 'transparent'
                       }}
