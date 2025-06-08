@@ -3,6 +3,7 @@ import { useTheme } from '../ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiZap, FiTool, FiDownload, FiShield, FiTrash2, FiBox, FiEye, FiSearch, FiPrinter, FiBell, FiMonitor, FiWifi, FiBluetooth, FiLayers, FiPlay } from 'react-icons/fi';
 import { invoke } from '@tauri-apps/api/tauri';
+import { showNotification } from '../components/NotificationSystem';
 import { ring } from 'ldrs';
 
 // Register the ring component
@@ -49,10 +50,14 @@ const Tools = () => {
     try {
       setActiveButton(funcName);
       setStatus('Processing...');
+      showNotification('info', 'Operation Started', `Running ${tools.find(t => t.function === funcName)?.name}...`);
+      
       const result = await invoke('run_function', { name: funcName, args: null });
       setStatus(result || 'Operation completed successfully!');
+      showNotification('success', 'Operation Complete', result || 'Operation completed successfully!');
     } catch (error) {
       setStatus(`Error: ${error}`);
+      showNotification('error', 'Operation Failed', `Error: ${error}`);
     } finally {
       setActiveButton(null);
     }
@@ -60,19 +65,23 @@ const Tools = () => {
 
   const handleFeatureToggle = async (featureKey, isComplex = false) => {
     const newState = !featureStates[featureKey];
+    const featureName = windowsFeatures.find(f => f.key === featureKey)?.name;
+    
     setFeatureStates(prev => ({
       ...prev,
       [featureKey]: newState
     }));
 
     try {
-      setStatus(`${newState ? 'Enabling' : 'Disabling'} ${windowsFeatures.find(f => f.key === featureKey)?.name}...`);
+      setStatus(`${newState ? 'Enabling' : 'Disabling'} ${featureName}...`);
+      showNotification('info', 'Feature Toggle', `${newState ? 'Enabling' : 'Disabling'} ${featureName}...`);
       
       // Call the appropriate function based on feature and state
       const functionName = `${newState ? 'enable' : 'disable'}_${featureKey}`;
       const result = await invoke('run_function', { name: functionName, args: null });
       
-      setStatus(result || `${windowsFeatures.find(f => f.key === featureKey)?.name} ${newState ? 'enabled' : 'disabled'} successfully!`);
+      setStatus(result || `${featureName} ${newState ? 'enabled' : 'disabled'} successfully!`);
+      showNotification('success', 'Feature Updated', `${featureName} ${newState ? 'enabled' : 'disabled'} successfully!`);
       
       setTimeout(() => setStatus(''), 3000);
     } catch (error) {
@@ -81,7 +90,8 @@ const Tools = () => {
         ...prev,
         [featureKey]: !newState
       }));
-      setStatus(`Error toggling ${windowsFeatures.find(f => f.key === featureKey)?.name}: ${error}`);
+      setStatus(`Error toggling ${featureName}: ${error}`);
+      showNotification('error', 'Feature Toggle Failed', `Error toggling ${featureName}: ${error}`);
     }
   };
 
@@ -97,37 +107,6 @@ const Tools = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
     >
-      <style>
-        {`
-          /* Custom Scrollbar */
-          ::-webkit-scrollbar {
-            width: 6px;
-          }
-          
-          ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 3px;
-          }
-          
-          ::-webkit-scrollbar-thumb {
-            background: ${primaryColor};
-            border-radius: 3px;
-            opacity: 0.7;
-          }
-          
-          ::-webkit-scrollbar-thumb:hover {
-            background: ${primaryColor}dd;
-            opacity: 1;
-          }
-          
-          /* Firefox */
-          * {
-            scrollbar-width: thin;
-            scrollbar-color: ${primaryColor} rgba(255, 255, 255, 0.05);
-          }
-        `}
-      </style>
-
       <h2 style={{ 
         fontSize: '28px',
         fontWeight: '600',

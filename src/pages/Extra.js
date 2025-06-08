@@ -3,6 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../ThemeContext';
 import { FiDownload, FiRefreshCw, FiClock } from 'react-icons/fi';
 import { invoke } from '@tauri-apps/api/tauri';
+import { showNotification } from '../components/NotificationSystem';
+import { ring } from 'ldrs';
+
+// Register the ring component
+ring.register();
 
 const Extra = () => {
   const { theme, primaryColor } = useTheme();
@@ -23,11 +28,14 @@ const Extra = () => {
     try {
       setActiveButton(name);
       setStatus('Downloading...');
+      showNotification('info', 'Download Started', `Downloading ${name}...`);
       
       const result = await invoke('download_to_desktop_and_run', { name, url });
       setStatus(result || `${name} has been downloaded and started`);
+      showNotification('success', 'Download Complete', `${name} has been downloaded and launched successfully!`);
     } catch (error) {
       setStatus(`❌ Error downloading ${name}: ${error}`);
+      showNotification('error', 'Download Failed', `Failed to download ${name}: ${error}`);
     } finally {
       setActiveButton(null);
     }
@@ -36,17 +44,21 @@ const Extra = () => {
   const handleRobloxDowngrade = async () => {
     if (!robloxVersion) {
       setStatus('Please enter a version hash');
+      showNotification('warning', 'Missing Version', 'Please enter a Roblox version hash');
       return;
     }
 
     try {
       setIsDownloading(true);
       setStatus('Starting Roblox downgrade...');
+      showNotification('info', 'Roblox Downgrade', 'Starting Roblox downgrade process...');
 
       const result = await invoke('download_player', { version_hash: robloxVersion });
       setStatus(result || '✅ Roblox downgrade completed successfully!');
+      showNotification('success', 'Roblox Downgrade Complete', 'Roblox has been successfully downgraded!');
     } catch (error) {
       setStatus(`❌ Error: ${error}`);
+      showNotification('error', 'Downgrade Failed', `Roblox downgrade failed: ${error}`);
     } finally {
       setIsDownloading(false);
     }
@@ -54,7 +66,12 @@ const Extra = () => {
 
   return (
     <motion.div
-      style={{ padding: 30 }}
+      style={{ 
+        padding: 30,
+        height: '100vh',
+        overflowY: 'auto',
+        overflowX: 'hidden'
+      }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
@@ -80,12 +97,41 @@ const Extra = () => {
         background: theme.cardBg,
         border: `1px solid ${theme.border}`,
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        marginBottom: '24px'
       }}>
+        <motion.div
+          animate={{
+            backgroundPosition: ['0% 0%', '100% 0%'],
+            opacity: [0.3, 0.7, 0.3]
+          }}
+          transition={{
+            duration: 4,
+            ease: "linear",
+            repeat: Infinity,
+            repeatType: "reverse"
+          }}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            borderRadius: '16px',
+            padding: '1px',
+            background: `linear-gradient(90deg, 
+              ${primaryColor}00 0%, 
+              ${primaryColor} 50%,
+              ${primaryColor}00 100%
+            )`,
+            mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+            maskComposite: 'exclude',
+          }}
+        />
+
         <h3 style={{ 
           marginBottom: 16,
           color: primaryColor,
-          filter: `drop-shadow(0 0 10px ${primaryColor}66)`
+          filter: `drop-shadow(0 0 10px ${primaryColor}66)`,
+          position: 'relative',
+          zIndex: 1
         }}>Roblox Downgrade</h3>
 
         <div style={{
@@ -93,7 +139,9 @@ const Extra = () => {
           fontSize: '12px',
           opacity: 0.4,
           color: theme.text,
-          fontFamily: 'monospace'
+          fontFamily: 'monospace',
+          position: 'relative',
+          zIndex: 1
         }}>
           {versions.map((v, i) => (
             <div key={i} style={{ marginBottom: '4px' }}>
@@ -115,7 +163,9 @@ const Extra = () => {
             border: `1px solid ${primaryColor}33`,
             background: theme.cardBg,
             color: theme.text,
-            outline: 'none'
+            outline: 'none',
+            position: 'relative',
+            zIndex: 1
           }}
         />
 
@@ -137,12 +187,20 @@ const Extra = () => {
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            marginBottom: '24px'
+            marginBottom: '24px',
+            position: 'relative',
+            zIndex: 1
           }}
         >
           {isDownloading ? (
             <>
-              <FiRefreshCw size={20} style={{ animation: 'spin 1s linear infinite' }} />
+              <l-ring
+                size="20"
+                stroke="3"
+                bg-opacity="0"
+                speed="2"
+                color={primaryColor}
+              />
               Downloading...
             </>
           ) : (
@@ -158,10 +216,18 @@ const Extra = () => {
           color: primaryColor,
           filter: `drop-shadow(0 0 10px ${primaryColor}66)`,
           opacity: 0.8,
-          fontSize: '16px'
+          fontSize: '16px',
+          position: 'relative',
+          zIndex: 1
         }}>Executors</h3>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: '1fr 1fr', 
+          gap: '16px',
+          position: 'relative',
+          zIndex: 1
+        }}>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -179,11 +245,18 @@ const Extra = () => {
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              opacity: activeButton === 'Swift' ? 0.7 : 1
+              opacity: activeButton === 'Swift' ? 0.7 : 1,
+              position: 'relative'
             }}
           >
             {activeButton === 'Swift' ? (
-              <FiRefreshCw size={20} style={{ animation: 'spin 1s linear infinite' }} />
+              <l-ring
+                size="20"
+                stroke="3"
+                bg-opacity="0"
+                speed="2"
+                color={primaryColor}
+              />
             ) : (
               <FiDownload size={20} />
             )}
@@ -207,11 +280,18 @@ const Extra = () => {
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              opacity: activeButton === 'Solara' ? 0.7 : 1
+              opacity: activeButton === 'Solara' ? 0.7 : 1,
+              position: 'relative'
             }}
           >
             {activeButton === 'Solara' ? (
-              <FiRefreshCw size={20} style={{ animation: 'spin 1s linear infinite' }} />
+              <l-ring
+                size="20"
+                stroke="3"
+                bg-opacity="0"
+                speed="2"
+                color={primaryColor}
+              />
             ) : (
               <FiDownload size={20} />
             )}
@@ -252,7 +332,9 @@ const Extra = () => {
                 padding: '12px',
                 borderRadius: '8px',
                 background: theme.cardBg,
-                border: `1px solid ${theme.border}`
+                border: `1px solid ${theme.border}`,
+                position: 'relative',
+                zIndex: 1
               }}
             >
               {status}

@@ -8,6 +8,7 @@ import Extra from './pages/Extra';
 import Settings from './Settings';
 import About from './pages/About';
 import Login from './components/Login';
+import NotificationSystem from './components/NotificationSystem';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMinus, FiX } from 'react-icons/fi';
 import { appWindow } from '@tauri-apps/api/window';
@@ -67,7 +68,7 @@ const App = () => {
           style={{ 
             flex: 1,
             height: '100vh',
-            overflow: 'auto',
+            overflow: 'hidden',
             background: `linear-gradient(135deg, ${theme.background}00 0%, ${theme.background} 100%)`,
           }}
         >
@@ -86,6 +87,30 @@ const App = () => {
       position: 'relative',
       overflow: 'hidden'
     }}>
+      <style>
+        {`
+          /* Global scrollbar styles */
+          ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+          }
+          
+          ::-webkit-scrollbar-thumb {
+            background: transparent;
+          }
+          
+          /* Firefox */
+          * {
+            scrollbar-width: none;
+          }
+          
+          /* Smooth scrolling */
+          * {
+            scroll-behavior: smooth;
+          }
+        `}
+      </style>
+
       <div 
         style={{
           position: 'fixed',
@@ -157,6 +182,7 @@ const App = () => {
       
       <Sidebar active={activeTab} onChange={setActiveTab} user={user} />
       {renderContent()}
+      <NotificationSystem />
     </div>
   );
 };
