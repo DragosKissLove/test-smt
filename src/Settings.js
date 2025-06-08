@@ -169,10 +169,38 @@ const Settings = () => {
           padding: '30px 20px',
           background: 'rgba(255, 255, 255, 0.02)',
           borderRight: `1px solid rgba(255, 255, 255, 0.1)`,
-          backdropFilter: 'blur(20px)'
+          backdropFilter: 'blur(20px)',
+          position: 'relative',
+          overflow: 'hidden'
         }}
       >
-        {/* User Profile */}
+        {/* Animated border for entire sidebar */}
+        <motion.div
+          animate={{
+            backgroundPosition: ['0% 0%', '100% 0%'],
+            opacity: [0.3, 0.7, 0.3]
+          }}
+          transition={{
+            duration: 4,
+            ease: "linear",
+            repeat: Infinity,
+            repeatType: "reverse"
+          }}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            padding: '1px',
+            background: `linear-gradient(90deg, 
+              ${primaryColor}00 0%, 
+              ${primaryColor} 50%,
+              ${primaryColor}00 100%
+            )`,
+            mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+            maskComposite: 'exclude',
+          }}
+        />
+
+        {/* User Profile with enhanced animation */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -185,31 +213,34 @@ const Settings = () => {
             marginBottom: '30px',
             textAlign: 'center',
             position: 'relative',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            zIndex: 1
           }}
         >
-          {/* Full animated border effect */}
+          {/* Enhanced animated border effect for user profile */}
           <motion.div
             animate={{
-              opacity: [0.4, 0.8, 0.4],
-              scale: [1, 1.02, 1]
+              opacity: [0.4, 1, 0.4],
+              scale: [1, 1.02, 1],
+              rotate: [0, 360]
             }}
             transition={{
-              duration: 3,
+              duration: 8,
               repeat: Infinity,
-              repeatType: "reverse"
+              repeatType: "reverse",
+              ease: "easeInOut"
             }}
             style={{
               position: 'absolute',
-              inset: '-1px',
-              borderRadius: '16px',
-              padding: '1px',
-              background: `linear-gradient(45deg, 
-                ${primaryColor}00 0%, 
-                ${primaryColor}88 25%,
-                ${primaryColor} 50%,
-                ${primaryColor}88 75%,
-                ${primaryColor}00 100%
+              inset: '-2px',
+              borderRadius: '18px',
+              padding: '2px',
+              background: `conic-gradient(from 0deg, 
+                ${primaryColor}00 0deg,
+                ${primaryColor}88 90deg,
+                ${primaryColor} 180deg,
+                ${primaryColor}88 270deg,
+                ${primaryColor}00 360deg
               )`,
               mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
               maskComposite: 'exclude',
@@ -219,44 +250,96 @@ const Settings = () => {
             }}
           />
           
-          <div style={{
-            width: '60px',
-            height: '60px',
-            borderRadius: '50%',
-            background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}cc)`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 12px',
-            boxShadow: `0 8px 32px ${primaryColor}40`,
-            position: 'relative',
-            zIndex: 1
-          }}>
-            <FiUser size={28} color="#fff" />
-          </div>
-          <h3 style={{
-            fontSize: '18px',
-            fontWeight: '600',
-            margin: '0 0 4px 0',
-            color: theme.text,
-            position: 'relative',
-            zIndex: 1
-          }}>
+          {/* Floating particles effect */}
+          {[...Array(3)].map((_, i) => (
+            <motion.div
+              key={i}
+              animate={{
+                y: [-10, -30, -10],
+                x: [0, 15, 0],
+                opacity: [0.3, 0.8, 0.3],
+                scale: [0.5, 1, 0.5]
+              }}
+              transition={{
+                duration: 3 + i,
+                repeat: Infinity,
+                repeatType: "reverse",
+                delay: i * 0.5
+              }}
+              style={{
+                position: 'absolute',
+                top: `${20 + i * 15}%`,
+                left: `${10 + i * 20}%`,
+                width: '4px',
+                height: '4px',
+                borderRadius: '50%',
+                background: primaryColor,
+                filter: `blur(1px)`,
+                pointerEvents: 'none'
+              }}
+            />
+          ))}
+          
+          <motion.div 
+            whileHover={{ 
+              scale: 1.05,
+              boxShadow: `0 12px 40px ${primaryColor}60`
+            }}
+            transition={{ duration: 0.3 }}
+            style={{
+              width: '60px',
+              height: '60px',
+              borderRadius: '50%',
+              background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}cc)`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 12px',
+              boxShadow: `0 8px 32px ${primaryColor}40`,
+              position: 'relative',
+              zIndex: 1
+            }}
+          >
+            <motion.div
+              animate={{ rotate: [0, 360] }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            >
+              <FiUser size={28} color="#fff" />
+            </motion.div>
+          </motion.div>
+          <motion.h3
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            style={{
+              fontSize: '18px',
+              fontWeight: '600',
+              margin: '0 0 4px 0',
+              color: theme.text,
+              position: 'relative',
+              zIndex: 1
+            }}
+          >
             {username}
-          </h3>
-          <p style={{
-            fontSize: '14px',
-            color: `${theme.text}80`,
-            margin: 0,
-            position: 'relative',
-            zIndex: 1
-          }}>
+          </motion.h3>
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            style={{
+              fontSize: '14px',
+              color: `${theme.text}80`,
+              margin: 0,
+              position: 'relative',
+              zIndex: 1
+            }}
+          >
             TFY Tool User
-          </p>
+          </motion.p>
         </motion.div>
 
         {/* Navigation Menu */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative', zIndex: 1 }}>
           {sections.map((section, index) => (
             <motion.button
               key={section.id}
@@ -328,7 +411,7 @@ const Settings = () => {
                 background: 'rgba(255, 255, 255, 0.03)',
                 borderRadius: '20px',
                 padding: '32px',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                border: `1px solid ${primaryColor}22`,
                 marginBottom: '24px',
                 position: 'relative',
                 overflow: 'hidden'
@@ -449,7 +532,7 @@ const Settings = () => {
                   padding: '24px',
                   borderRadius: '16px',
                   background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  border: `1px solid ${primaryColor}22`,
                   position: 'relative',
                   zIndex: 1
                 }}>
@@ -533,7 +616,7 @@ const Settings = () => {
                 background: 'rgba(255, 255, 255, 0.03)',
                 borderRadius: '20px',
                 padding: '32px',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                border: `1px solid ${primaryColor}22`,
                 position: 'relative',
                 overflow: 'hidden'
               }}>
@@ -695,7 +778,7 @@ const Settings = () => {
                   background: 'rgba(255, 255, 255, 0.03)',
                   borderRadius: '20px',
                   padding: '32px',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  border: `1px solid ${primaryColor}22`,
                   position: 'relative',
                   overflow: 'hidden'
                 }}>
@@ -807,7 +890,7 @@ const Settings = () => {
                   background: 'rgba(255, 255, 255, 0.03)',
                   borderRadius: '20px',
                   padding: '32px',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  border: `1px solid ${primaryColor}22`,
                   position: 'relative',
                   overflow: 'hidden'
                 }}>
