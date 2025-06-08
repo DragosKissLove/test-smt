@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from './ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiRefreshCw, FiPalette, FiMonitor, FiInfo, FiCheck, FiUser, FiSettings, FiDownload, FiStar } from 'react-icons/fi';
+import { FiRefreshCw, FiDroplet, FiMonitor, FiInfo, FiCheck, FiUser, FiSettings, FiDownload, FiStar } from 'react-icons/fi';
 import UpdateNotification from './components/UpdateNotification';
 
 const colorPresets = [
@@ -98,7 +98,7 @@ const Settings = () => {
   };
 
   const sections = [
-    { id: 'appearance', name: 'Appearance', icon: FiPalette },
+    { id: 'appearance', name: 'Appearance', icon: FiDroplet },
     { id: 'updates', name: 'Updates', icon: FiDownload },
     { id: 'about', name: 'About', icon: FiInfo }
   ];
