@@ -29,7 +29,8 @@ const Settings = () => {
     ram: 'Loading...',
     gpu: 'Loading...',
     os: 'Loading...',
-    platform: 'Loading...'
+    platform: 'Loading...',
+    storage: 'Loading...'
   });
 
   useEffect(() => {
@@ -37,60 +38,173 @@ const Settings = () => {
     const preset = colorPresets.find(p => p.color === primaryColor);
     setSelectedPreset(preset?.name || 'Custom');
 
-    // Get username and system info using electron function
+    // Get comprehensive system information
     const getSystemInfo = async () => {
       try {
+        // Get username
         if (window.electron && window.electron.runFunction) {
           const result = await window.electron.runFunction('getUsername');
           setUsername(result || 'User');
         }
         
-        // Get system information
+        // Get detailed system information
+        const newSystemInfo = { ...systemInfo };
+
+        // Operating System
         if (navigator.userAgent) {
           const userAgent = navigator.userAgent;
           let osInfo = 'Unknown OS';
           
-          if (userAgent.includes('Windows NT 10.0')) osInfo = 'Windows 10/11';
-          else if (userAgent.includes('Windows NT 6.3')) osInfo = 'Windows 8.1';
+          if (userAgent.includes('Windows NT 10.0')) {
+            const buildNumber = userAgent.match(/Windows NT 10\.0; Win64; x64.*?(\d{5})/);
+            osInfo = buildNumber ? `Windows 11 (Build ${buildNumber[1]})` : 'Windows 10/11';
+          } else if (userAgent.includes('Windows NT 6.3')) osInfo = 'Windows 8.1';
           else if (userAgent.includes('Windows NT 6.2')) osInfo = 'Windows 8';
           else if (userAgent.includes('Windows NT 6.1')) osInfo = 'Windows 7';
           else if (userAgent.includes('Windows')) osInfo = 'Windows';
           
-          setSystemInfo(prev => ({
-            ...prev,
-            os: osInfo,
-            platform: navigator.platform || 'Unknown',
-            ram: `${Math.round(navigator.deviceMemory || 0)}GB` || 'Unknown',
-            cpu: navigator.hardwareConcurrency ? `${navigator.hardwareConcurrency} cores` : 'Unknown'
-          }));
+          newSystemInfo.os = osInfo;
+          newSystemInfo.platform = navigator.platform || 'Unknown';
         }
 
-        // Try to get GPU info
-        if (navigator.gpu) {
+        // CPU Information - Get real processor name and cores
+        if (navigator.hardwareConcurrency) {
+          const cores = navigator.hardwareConcurrency;
+          // Try to get CPU name from user agent or other sources
+          let cpuName = 'Unknown Processor';
+          
+          // Check for common CPU identifiers in user agent
+          const userAgent = navigator.userAgent;
+          if (userAgent.includes('Intel')) cpuName = 'Intel Processor';
+          else if (userAgent.includes('AMD')) cpuName = 'AMD Processor';
+          
+          // Try to get more specific CPU info if available
           try {
-            const adapter = await navigator.gpu.requestAdapter();
-            if (adapter) {
-              setSystemInfo(prev => ({
-                ...prev,
-                gpu: 'WebGPU Compatible'
-              }));
+            if (window.electron && window.electron.runFunction) {
+              // We can get CPU info through electron if available
+              const cpuInfo = await window.electron.runFunction('getCpuInfo');
+              if (cpuInfo) {
+                newSystemInfo.cpu = `${cpuInfo} (${cores} cores)`;
+              } else {
+                newSystemInfo.cpu = `${cpuName} (${cores} cores)`;
+              }
+            } else {
+              newSystemInfo.cpu = `${cpuName} (${cores} cores)`;
             }
           } catch (e) {
-            setSystemInfo(prev => ({
-              ...prev,
-              gpu: 'DirectX/OpenGL'
-            }));
+            newSystemInfo.cpu = `${cpuName} (${cores} cores)`;
+          }
+        }
+
+        // Memory Information - RAM + Storage
+        let memoryInfo = [];
+        
+        // RAM with frequency if available
+        if (navigator.deviceMemory) {
+          const ramGB = navigator.deviceMemory;
+          // Try to get RAM frequency through electron
+          try {
+            if (window.electron && window.electron.runFunction) {
+              const ramDetails = await window.electron.runFunction('getRamInfo');
+              if (ramDetails) {
+                memoryInfo.push(`RAM: ${ramGB}GB ${ramDetails}`);
+              } else {
+                memoryInfo.push(`RAM: ${ramGB}GB`);
+              }
+            } else {
+              memoryInfo.push(`RAM: ${ramGB}GB`);
+            }
+          } catch (e) {
+            memoryInfo.push(`RAM: ${ramGB}GB`);
           }
         } else {
-          setSystemInfo(prev => ({
-            ...prev,
-            gpu: 'DirectX/OpenGL'
-          }));
+          memoryInfo.push('RAM: Unknown');
         }
+
+        // Storage information
+        try {
+          if (window.electron && window.electron.runFunction) {
+            const storageInfo = await window.electron.runFunction('getStorageInfo');
+            if (storageInfo) {
+              memoryInfo.push(storageInfo);
+            }
+          } else {
+            // Fallback storage estimation
+            if (navigator.storage && navigator.storage.estimate) {
+              const estimate = await navigator.storage.estimate();
+              if (estimate.quota) {
+                const totalGB = Math.round(estimate.quota / (1024 * 1024 * 1024));
+                memoryInfo.push(`Storage: ~${totalGB}GB`);
+              }
+            }
+          }
+        } catch (e) {
+          // Fallback
+          memoryInfo.push('Storage: Unknown');
+        }
+
+        newSystemInfo.ram = memoryInfo.join(' • ');
+
+        // Graphics Information - GPU name and driver version
+        try {
+          if (window.electron && window.electron.runFunction) {
+            const gpuInfo = await window.electron.runFunction('getGpuInfo');
+            if (gpuInfo) {
+              newSystemInfo.gpu = gpuInfo;
+            } else {
+              // Fallback GPU detection
+              await detectGPU(newSystemInfo);
+            }
+          } else {
+            await detectGPU(newSystemInfo);
+          }
+        } catch (e) {
+          await detectGPU(newSystemInfo);
+        }
+
+        setSystemInfo(newSystemInfo);
       } catch (error) {
         console.error('Error getting system info:', error);
       }
     };
+
+    // GPU Detection function
+    const detectGPU = async (info) => {
+      try {
+        // Try WebGL for GPU info
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        
+        if (gl) {
+          const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+          if (debugInfo) {
+            const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+            const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+            info.gpu = `${vendor} ${renderer}`;
+            return;
+          }
+        }
+
+        // Try WebGPU if available
+        if (navigator.gpu) {
+          try {
+            const adapter = await navigator.gpu.requestAdapter();
+            if (adapter) {
+              info.gpu = 'WebGPU Compatible GPU';
+              return;
+            }
+          } catch (e) {
+            // Continue to fallback
+          }
+        }
+
+        // Fallback
+        info.gpu = 'DirectX/OpenGL Compatible';
+      } catch (e) {
+        info.gpu = 'Graphics Adapter';
+      }
+    };
+
     getSystemInfo();
 
     if (window.electron) {
@@ -443,10 +557,10 @@ const Settings = () => {
                       value={primaryColor}
                       onChange={handleColorChange}
                       style={{
-                        width: '40px',
-                        height: '40px',
+                        width: '32px',
+                        height: '32px',
                         border: 'none',
-                        borderRadius: '12px',
+                        borderRadius: '8px',
                         cursor: 'pointer',
                         background: 'transparent'
                       }}
@@ -737,7 +851,7 @@ const Settings = () => {
                       color: theme.text,
                       margin: 0
                     }}>
-                      Proprietary
+                      Free
                     </p>
                   </div>
                 </div>
@@ -866,7 +980,7 @@ const Settings = () => {
                         color: primaryColor,
                         margin: '0 0 4px 0'
                       }}>
-                        Memory
+                        Memory & Storage
                       </h4>
                       <p style={{
                         fontSize: '14px',

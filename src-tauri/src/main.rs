@@ -160,8 +160,141 @@ async fn download_player(version_hash: String) -> Result<String, String> {
 }
 
 #[tauri::command]
+fn get_cpu_info() -> Result<String, String> {
+    let output = Command::new("wmic")
+        .args(&["cpu", "get", "name", "/format:value"])
+        .output()
+        .map_err(|e| format!("Failed to get CPU info: {}", e))?;
+
+    let output_str = String::from_utf8_lossy(&output.stdout);
+    for line in output_str.lines() {
+        if line.starts_with("Name=") {
+            let cpu_name = line.replace("Name=", "").trim().to_string();
+            if !cpu_name.is_empty() {
+                return Ok(cpu_name);
+            }
+        }
+    }
+    
+    Err("Could not determine CPU name".to_string())
+}
+
+#[tauri::command]
+fn get_ram_info() -> Result<String, String> {
+    let output = Command::new("wmic")
+        .args(&["memorychip", "get", "speed,capacity", "/format:csv"])
+        .output()
+        .map_err(|e| format!("Failed to get RAM info: {}", e))?;
+
+    let output_str = String::from_utf8_lossy(&output.stdout);
+    let mut total_capacity = 0u64;
+    let mut speeds = Vec::new();
+
+    for line in output_str.lines() {
+        if line.contains(',') && !line.contains("Node") {
+            let parts: Vec<&str> = line.split(',').collect();
+            if parts.len() >= 3 {
+                if let Ok(capacity) = parts[1].trim().parse::<u64>() {
+                    total_capacity += capacity;
+                }
+                if let Ok(speed) = parts[2].trim().parse::<u32>() {
+                    if speed > 0 {
+                        speeds.push(speed);
+                    }
+                }
+            }
+        }
+    }
+
+    let total_gb = total_capacity / (1024 * 1024 * 1024);
+    let avg_speed = if !speeds.is_empty() {
+        speeds.iter().sum::<u32>() / speeds.len() as u32
+    } else {
+        0
+    };
+
+    if avg_speed > 0 {
+        Ok(format!("{}GB DDR4-{}", total_gb, avg_speed))
+    } else {
+        Ok(format!("{}GB", total_gb))
+    }
+}
+
+#[tauri::command]
+fn get_storage_info() -> Result<String, String> {
+    let output = Command::new("wmic")
+        .args(&["diskdrive", "get", "size,model", "/format:csv"])
+        .output()
+        .map_err(|e| format!("Failed to get storage info: {}", e))?;
+
+    let output_str = String::from_utf8_lossy(&output.stdout);
+    let mut storage_devices = Vec::new();
+
+    for line in output_str.lines() {
+        if line.contains(',') && !line.contains("Node") {
+            let parts: Vec<&str> = line.split(',').collect();
+            if parts.len() >= 3 {
+                let model = parts[1].trim();
+                if let Ok(size) = parts[2].trim().parse::<u64>() {
+                    let size_gb = size / (1024 * 1024 * 1024);
+                    if size_gb > 0 && !model.is_empty() {
+                        let drive_type = if model.to_lowercase().contains("ssd") || 
+                                           model.to_lowercase().contains("nvme") {
+                            "SSD"
+                        } else {
+                            "HDD"
+                        };
+                        storage_devices.push(format!("{}: {}GB", drive_type, size_gb));
+                    }
+                }
+            }
+        }
+    }
+
+    if storage_devices.is_empty() {
+        Ok("Storage: Unknown".to_string())
+    } else {
+        Ok(storage_devices.join(" • "))
+    }
+}
+
+#[tauri::command]
+fn get_gpu_info() -> Result<String, String> {
+    let output = Command::new("wmic")
+        .args(&["path", "win32_VideoController", "get", "name,driverversion", "/format:csv"])
+        .output()
+        .map_err(|e| format!("Failed to get GPU info: {}", e))?;
+
+    let output_str = String::from_utf8_lossy(&output.stdout);
+    
+    for line in output_str.lines() {
+        if line.contains(',') && !line.contains("Node") {
+            let parts: Vec<&str> = line.split(',').collect();
+            if parts.len() >= 3 {
+                let driver_version = parts[1].trim();
+                let name = parts[2].trim();
+                
+                if !name.is_empty() && !name.contains("Microsoft") {
+                    if !driver_version.is_empty() {
+                        return Ok(format!("{} (Driver: {})", name, driver_version));
+                    } else {
+                        return Ok(name.to_string());
+                    }
+                }
+            }
+        }
+    }
+    
+    Err("Could not determine GPU info".to_string())
+}
+
+#[tauri::command]
 async fn run_function(name: String, _args: Option<String>) -> Result<String, String> {
     match name.as_str() {
+        "getCpuInfo" => get_cpu_info(),
+        "getRamInfo" => get_ram_info(),
+        "getStorageInfo" => get_storage_info(),
+        "getGpuInfo" => get_gpu_info(),
         "winrar_crack" => {
             let url = "https://raw.githubusercontent.com/DragosKissLove/tfy-electron2312/master/rarreg.key";
             let response = reqwest::get(url).await.map_err(|e| e.to_string())?;
@@ -662,7 +795,11 @@ fn main() {
             download_player,
             run_function,
             get_username,
-            download_to_desktop_and_run
+            download_to_desktop_and_run,
+            get_cpu_info,
+            get_ram_info,
+            get_storage_info,
+            get_gpu_info
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
