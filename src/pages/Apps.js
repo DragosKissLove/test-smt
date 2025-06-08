@@ -27,24 +27,9 @@ const apps = [
   { name: 'Visual Studio Code', icon: 'visual.png', url: 'https://update.code.visualstudio.com/latest/win32-x64-user/stable', filename: 'VSCodeSetup.exe', isComplex: true, color: '#007ACC', category: 'Development' }
 ];
 
-// Category color mapping for better visibility
-const categoryColors = {
-  'Media': '#E91E63',
-  'Gaming': '#2196F3', 
-  'Communication': '#9C27B0',
-  'Browser': '#FF9800',
-  'Security': '#4CAF50',
-  'Utility': '#607D8B',
-  'Development': '#3F51B5'
-};
-
 const Apps = () => {
   const { theme, primaryColor } = useTheme();
   const [downloadingApps, setDownloadingApps] = useState(new Set());
-  const [selectedCategory, setSelectedCategory] = useState('All');
-
-  const categories = ['All', ...new Set(apps.map(app => app.category))];
-  const filteredApps = selectedCategory === 'All' ? apps : apps.filter(app => app.category === selectedCategory);
 
   const installApp = async (app) => {
     try {
@@ -95,44 +80,6 @@ const Apps = () => {
         Install Applications
       </motion.h2>
 
-      {/* Category Filter */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        style={{
-          display: 'flex',
-          gap: '12px',
-          marginBottom: '30px',
-          flexWrap: 'wrap'
-        }}
-      >
-        {categories.map((category) => (
-          <motion.button
-            key={category}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setSelectedCategory(category)}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '20px',
-              border: 'none',
-              background: selectedCategory === category 
-                ? `linear-gradient(135deg, ${primaryColor}, ${primaryColor}cc)`
-                : 'rgba(255, 255, 255, 0.1)',
-              color: selectedCategory === category ? '#fff' : theme.text,
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              backdropFilter: 'blur(10px)',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            {category}
-          </motion.button>
-        ))}
-      </motion.div>
-
       {/* Apps Grid */}
       <motion.div
         layout
@@ -142,10 +89,9 @@ const Apps = () => {
           gap: '20px'
         }}
       >
-        {filteredApps.map((app, index) => {
+        {apps.map((app, index) => {
           const isDownloading = downloadingApps.has(app.name);
           const appColor = app.color || primaryColor;
-          const categoryColor = categoryColors[app.category] || primaryColor;
           
           return (
             <motion.div
@@ -212,13 +158,11 @@ const Apps = () => {
                   </h3>
                   <span style={{
                     fontSize: '12px',
-                    color: '#FFFFFF',
-                    fontWeight: '600',
-                    background: categoryColor,
-                    padding: '4px 10px',
-                    borderRadius: '12px',
-                    textShadow: '0 1px 2px rgba(0, 0, 0, 0.7)',
-                    boxShadow: `0 2px 8px ${categoryColor}40`
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    padding: '4px 8px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255, 255, 255, 0.2)'
                   }}>
                     {app.category}
                   </span>

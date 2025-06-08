@@ -285,25 +285,6 @@ const Settings = () => {
             >
               <section.icon size={20} />
               {section.name}
-              {activeSection === section.id && (
-                <motion.div
-                  layoutId="activeIndicator"
-                  style={{
-                    position: 'absolute',
-                    left: '-20px',
-                    top: 0,
-                    bottom: 0,
-                    width: '4px',
-                    background: primaryColor,
-                    borderRadius: '0 2px 2px 0'
-                  }}
-                  transition={{ 
-                    type: "spring", 
-                    stiffness: 300, 
-                    damping: 30 
-                  }}
-                />
-              )}
             </motion.button>
           ))}
         </div>
