@@ -3,6 +3,7 @@ import { useTheme } from './ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiRefreshCw, FiDroplet, FiMonitor, FiDownload, FiCheck, FiUser, FiSettings, FiStar, FiCpu, FiInfo, FiHardDrive, FiZap } from 'react-icons/fi';
 import UpdateNotification from './components/UpdateNotification';
+import { invoke } from '@tauri-apps/api/tauri';
 
 const colorPresets = [
   { name: 'Crimson', color: '#DC2626', gradient: 'linear-gradient(135deg, #DC2626, #EF4444)' },
@@ -29,7 +30,6 @@ const Settings = () => {
     ram: 'Loading...',
     gpu: 'Loading...',
     os: 'Loading...',
-    platform: 'Loading...',
     storage: 'Loading...'
   });
 
@@ -42,166 +42,45 @@ const Settings = () => {
     const getSystemInfo = async () => {
       try {
         // Get username
-        if (window.electron && window.electron.runFunction) {
-          const result = await window.electron.runFunction('getUsername');
-          setUsername(result || 'User');
-        }
+        const result = await invoke('get_username');
+        setUsername(result || 'User');
         
         // Get detailed system information
         const newSystemInfo = { ...systemInfo };
 
-        // Operating System
-        if (navigator.userAgent) {
-          const userAgent = navigator.userAgent;
-          let osInfo = 'Unknown OS';
-          
-          if (userAgent.includes('Windows NT 10.0')) {
-            const buildNumber = userAgent.match(/Windows NT 10\.0; Win64; x64.*?(\d{5})/);
-            osInfo = buildNumber ? `Windows 11 (Build ${buildNumber[1]})` : 'Windows 10/11';
-          } else if (userAgent.includes('Windows NT 6.3')) osInfo = 'Windows 8.1';
-          else if (userAgent.includes('Windows NT 6.2')) osInfo = 'Windows 8';
-          else if (userAgent.includes('Windows NT 6.1')) osInfo = 'Windows 7';
-          else if (userAgent.includes('Windows')) osInfo = 'Windows';
-          
+        // Get real system data from Tauri commands
+        try {
+          const osInfo = await invoke('run_function', { name: 'getOsInfo', args: null });
           newSystemInfo.os = osInfo;
-          newSystemInfo.platform = navigator.platform || 'Unknown';
-        }
-
-        // CPU Information - Get real processor name and cores
-        if (navigator.hardwareConcurrency) {
-          const cores = navigator.hardwareConcurrency;
-          // Try to get CPU name from user agent or other sources
-          let cpuName = 'Unknown Processor';
-          
-          // Check for common CPU identifiers in user agent
-          const userAgent = navigator.userAgent;
-          if (userAgent.includes('Intel')) cpuName = 'Intel Processor';
-          else if (userAgent.includes('AMD')) cpuName = 'AMD Processor';
-          
-          // Try to get more specific CPU info if available
-          try {
-            if (window.electron && window.electron.runFunction) {
-              // We can get CPU info through electron if available
-              const cpuInfo = await window.electron.runFunction('getCpuInfo');
-              if (cpuInfo) {
-                newSystemInfo.cpu = `${cpuInfo} (${cores} cores)`;
-              } else {
-                newSystemInfo.cpu = `${cpuName} (${cores} cores)`;
-              }
-            } else {
-              newSystemInfo.cpu = `${cpuName} (${cores} cores)`;
-            }
-          } catch (e) {
-            newSystemInfo.cpu = `${cpuName} (${cores} cores)`;
-          }
-        }
-
-        // Memory Information - RAM + Storage
-        let memoryInfo = [];
-        
-        // RAM with frequency if available
-        if (navigator.deviceMemory) {
-          const ramGB = navigator.deviceMemory;
-          // Try to get RAM frequency through electron
-          try {
-            if (window.electron && window.electron.runFunction) {
-              const ramDetails = await window.electron.runFunction('getRamInfo');
-              if (ramDetails) {
-                memoryInfo.push(`RAM: ${ramGB}GB ${ramDetails}`);
-              } else {
-                memoryInfo.push(`RAM: ${ramGB}GB`);
-              }
-            } else {
-              memoryInfo.push(`RAM: ${ramGB}GB`);
-            }
-          } catch (e) {
-            memoryInfo.push(`RAM: ${ramGB}GB`);
-          }
-        } else {
-          memoryInfo.push('RAM: Unknown');
-        }
-
-        // Storage information
-        try {
-          if (window.electron && window.electron.runFunction) {
-            const storageInfo = await window.electron.runFunction('getStorageInfo');
-            if (storageInfo) {
-              memoryInfo.push(storageInfo);
-            }
-          } else {
-            // Fallback storage estimation
-            if (navigator.storage && navigator.storage.estimate) {
-              const estimate = await navigator.storage.estimate();
-              if (estimate.quota) {
-                const totalGB = Math.round(estimate.quota / (1024 * 1024 * 1024));
-                memoryInfo.push(`Storage: ~${totalGB}GB`);
-              }
-            }
-          }
         } catch (e) {
-          // Fallback
-          memoryInfo.push('Storage: Unknown');
+          newSystemInfo.os = 'Windows (Unknown version)';
         }
 
-        newSystemInfo.ram = memoryInfo.join(' • ');
-
-        // Graphics Information - GPU name and driver version
         try {
-          if (window.electron && window.electron.runFunction) {
-            const gpuInfo = await window.electron.runFunction('getGpuInfo');
-            if (gpuInfo) {
-              newSystemInfo.gpu = gpuInfo;
-            } else {
-              // Fallback GPU detection
-              await detectGPU(newSystemInfo);
-            }
-          } else {
-            await detectGPU(newSystemInfo);
-          }
+          const cpuInfo = await invoke('run_function', { name: 'getCpuInfo', args: null });
+          newSystemInfo.cpu = cpuInfo;
         } catch (e) {
-          await detectGPU(newSystemInfo);
+          newSystemInfo.cpu = 'Unknown Processor';
+        }
+
+        try {
+          const ramInfo = await invoke('run_function', { name: 'getRamInfo', args: null });
+          const storageInfo = await invoke('run_function', { name: 'getStorageInfo', args: null });
+          newSystemInfo.ram = `${ramInfo} • ${storageInfo}`;
+        } catch (e) {
+          newSystemInfo.ram = 'Memory information unavailable';
+        }
+
+        try {
+          const gpuInfo = await invoke('run_function', { name: 'getGpuInfo', args: null });
+          newSystemInfo.gpu = gpuInfo;
+        } catch (e) {
+          newSystemInfo.gpu = 'Graphics information unavailable';
         }
 
         setSystemInfo(newSystemInfo);
       } catch (error) {
         console.error('Error getting system info:', error);
-      }
-    };
-
-    // GPU Detection function
-    const detectGPU = async (info) => {
-      try {
-        // Try WebGL for GPU info
-        const canvas = document.createElement('canvas');
-        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-        
-        if (gl) {
-          const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-          if (debugInfo) {
-            const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
-            const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
-            info.gpu = `${vendor} ${renderer}`;
-            return;
-          }
-        }
-
-        // Try WebGPU if available
-        if (navigator.gpu) {
-          try {
-            const adapter = await navigator.gpu.requestAdapter();
-            if (adapter) {
-              info.gpu = 'WebGPU Compatible GPU';
-              return;
-            }
-          } catch (e) {
-            // Continue to fallback
-          }
-        }
-
-        // Fallback
-        info.gpu = 'DirectX/OpenGL Compatible';
-      } catch (e) {
-        info.gpu = 'Graphics Adapter';
       }
     };
 
@@ -286,7 +165,7 @@ const Settings = () => {
           backdropFilter: 'blur(20px)'
         }}
       >
-        {/* User Profile - Only floating particles */}
+        {/* User Profile */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -302,7 +181,7 @@ const Settings = () => {
             overflow: 'hidden'
           }}
         >
-          {/* Simple floating particles - no border animations */}
+          {/* Simple floating particles */}
           {[...Array(5)].map((_, i) => (
             <motion.div
               key={i}
@@ -557,10 +436,10 @@ const Settings = () => {
                       value={primaryColor}
                       onChange={handleColorChange}
                       style={{
-                        width: '32px',
-                        height: '32px',
+                        width: '24px',
+                        height: '24px',
                         border: 'none',
-                        borderRadius: '8px',
+                        borderRadius: '6px',
                         cursor: 'pointer',
                         background: 'transparent'
                       }}
@@ -663,23 +542,23 @@ const Settings = () => {
                   onClick={handleCheckUpdates}
                   disabled={isChecking}
                   style={{
-                    padding: '16px 32px',
+                    padding: '12px 24px',
                     borderRadius: '12px',
                     border: 'none',
                     background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}cc)`,
                     color: '#fff',
-                    fontSize: '16px',
+                    fontSize: '14px',
                     fontWeight: '600',
                     cursor: isChecking ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '12px',
+                    gap: '8px',
                     opacity: isChecking ? 0.7 : 1,
                     transition: 'all 0.3s ease'
                   }}
                 >
                   <FiRefreshCw 
-                    size={20}
+                    size={16}
                     style={{ 
                       animation: isChecking ? 'spin 1s linear infinite' : 'none'
                     }} 

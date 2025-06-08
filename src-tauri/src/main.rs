@@ -162,68 +162,98 @@ async fn download_player(version_hash: String) -> Result<String, String> {
 #[tauri::command]
 fn get_cpu_info() -> Result<String, String> {
     let output = Command::new("wmic")
-        .args(&["cpu", "get", "name", "/format:value"])
+        .args(&["cpu", "get", "name,numberofcores", "/format:csv"])
         .output()
         .map_err(|e| format!("Failed to get CPU info: {}", e))?;
 
     let output_str = String::from_utf8_lossy(&output.stdout);
-    for line in output_str.lines() {
-        if line.starts_with("Name=") {
-            let cpu_name = line.replace("Name=", "").trim().to_string();
-            if !cpu_name.is_empty() {
-                return Ok(cpu_name);
-            }
-        }
-    }
-    
-    Err("Could not determine CPU name".to_string())
-}
-
-#[tauri::command]
-fn get_ram_info() -> Result<String, String> {
-    let output = Command::new("wmic")
-        .args(&["memorychip", "get", "speed,capacity", "/format:csv"])
-        .output()
-        .map_err(|e| format!("Failed to get RAM info: {}", e))?;
-
-    let output_str = String::from_utf8_lossy(&output.stdout);
-    let mut total_capacity = 0u64;
-    let mut speeds = Vec::new();
+    let mut cpu_name = String::new();
+    let mut cores = String::new();
 
     for line in output_str.lines() {
         if line.contains(',') && !line.contains("Node") {
             let parts: Vec<&str> = line.split(',').collect();
             if parts.len() >= 3 {
-                if let Ok(capacity) = parts[1].trim().parse::<u64>() {
-                    total_capacity += capacity;
+                let name = parts[1].trim();
+                let core_count = parts[2].trim();
+                
+                if !name.is_empty() && !core_count.is_empty() {
+                    cpu_name = name.to_string();
+                    cores = core_count.to_string();
+                    break;
                 }
-                if let Ok(speed) = parts[2].trim().parse::<u32>() {
+            }
+        }
+    }
+    
+    if !cpu_name.is_empty() && !cores.is_empty() {
+        Ok(format!("{} ({} cores)", cpu_name, cores))
+    } else {
+        Err("Could not determine CPU information".to_string())
+    }
+}
+
+#[tauri::command]
+fn get_ram_info() -> Result<String, String> {
+    // Get total RAM
+    let ram_output = Command::new("wmic")
+        .args(&["computersystem", "get", "TotalPhysicalMemory", "/format:csv"])
+        .output()
+        .map_err(|e| format!("Failed to get RAM info: {}", e))?;
+
+    let ram_str = String::from_utf8_lossy(&ram_output.stdout);
+    let mut total_ram_gb = 0;
+
+    for line in ram_str.lines() {
+        if line.contains(',') && !line.contains("Node") {
+            let parts: Vec<&str> = line.split(',').collect();
+            if parts.len() >= 2 {
+                if let Ok(ram_bytes) = parts[1].trim().parse::<u64>() {
+                    total_ram_gb = ram_bytes / (1024 * 1024 * 1024);
+                    break;
+                }
+            }
+        }
+    }
+
+    // Get RAM speed
+    let speed_output = Command::new("wmic")
+        .args(&["memorychip", "get", "speed", "/format:csv"])
+        .output()
+        .map_err(|e| format!("Failed to get RAM speed: {}", e))?;
+
+    let speed_str = String::from_utf8_lossy(&speed_output.stdout);
+    let mut ram_speed = 0;
+
+    for line in speed_str.lines() {
+        if line.contains(',') && !line.contains("Node") {
+            let parts: Vec<&str> = line.split(',').collect();
+            if parts.len() >= 2 {
+                if let Ok(speed) = parts[1].trim().parse::<u32>() {
                     if speed > 0 {
-                        speeds.push(speed);
+                        ram_speed = speed;
+                        break;
                     }
                 }
             }
         }
     }
 
-    let total_gb = total_capacity / (1024 * 1024 * 1024);
-    let avg_speed = if !speeds.is_empty() {
-        speeds.iter().sum::<u32>() / speeds.len() as u32
+    if total_ram_gb > 0 {
+        if ram_speed > 0 {
+            Ok(format!("{}GB DDR4-{}", total_ram_gb, ram_speed))
+        } else {
+            Ok(format!("{}GB RAM", total_ram_gb))
+        }
     } else {
-        0
-    };
-
-    if avg_speed > 0 {
-        Ok(format!("{}GB DDR4-{}", total_gb, avg_speed))
-    } else {
-        Ok(format!("{}GB", total_gb))
+        Err("Could not determine RAM information".to_string())
     }
 }
 
 #[tauri::command]
 fn get_storage_info() -> Result<String, String> {
     let output = Command::new("wmic")
-        .args(&["diskdrive", "get", "size,model", "/format:csv"])
+        .args(&["diskdrive", "get", "size,model,mediatype", "/format:csv"])
         .output()
         .map_err(|e| format!("Failed to get storage info: {}", e))?;
 
@@ -233,12 +263,14 @@ fn get_storage_info() -> Result<String, String> {
     for line in output_str.lines() {
         if line.contains(',') && !line.contains("Node") {
             let parts: Vec<&str> = line.split(',').collect();
-            if parts.len() >= 3 {
-                let model = parts[1].trim();
-                if let Ok(size) = parts[2].trim().parse::<u64>() {
+            if parts.len() >= 4 {
+                let media_type = parts[1].trim();
+                let model = parts[2].trim();
+                if let Ok(size) = parts[3].trim().parse::<u64>() {
                     let size_gb = size / (1024 * 1024 * 1024);
                     if size_gb > 0 && !model.is_empty() {
-                        let drive_type = if model.to_lowercase().contains("ssd") || 
+                        let drive_type = if media_type.contains("SSD") || 
+                                           model.to_lowercase().contains("ssd") || 
                                            model.to_lowercase().contains("nvme") {
                             "SSD"
                         } else {
@@ -274,7 +306,11 @@ fn get_gpu_info() -> Result<String, String> {
                 let driver_version = parts[1].trim();
                 let name = parts[2].trim();
                 
-                if !name.is_empty() && !name.contains("Microsoft") {
+                // Skip Microsoft Basic Display Adapter and other generic adapters
+                if !name.is_empty() && 
+                   !name.contains("Microsoft Basic Display") && 
+                   !name.contains("Remote Desktop") &&
+                   (name.contains("NVIDIA") || name.contains("AMD") || name.contains("Intel") || name.contains("Radeon") || name.contains("GeForce")) {
                     if !driver_version.is_empty() {
                         return Ok(format!("{} (Driver: {})", name, driver_version));
                     } else {
@@ -289,12 +325,53 @@ fn get_gpu_info() -> Result<String, String> {
 }
 
 #[tauri::command]
+fn get_os_info() -> Result<String, String> {
+    let output = Command::new("wmic")
+        .args(&["os", "get", "caption,version,buildnumber", "/format:csv"])
+        .output()
+        .map_err(|e| format!("Failed to get OS info: {}", e))?;
+
+    let output_str = String::from_utf8_lossy(&output.stdout);
+    
+    for line in output_str.lines() {
+        if line.contains(',') && !line.contains("Node") {
+            let parts: Vec<&str> = line.split(',').collect();
+            if parts.len() >= 4 {
+                let build_number = parts[1].trim();
+                let caption = parts[2].trim();
+                let version = parts[3].trim();
+                
+                if !caption.is_empty() && !build_number.is_empty() {
+                    // Determine Windows version based on build number
+                    let windows_version = if let Ok(build) = build_number.parse::<u32>() {
+                        if build >= 22000 {
+                            "Windows 11"
+                        } else if build >= 10240 {
+                            "Windows 10"
+                        } else {
+                            caption
+                        }
+                    } else {
+                        caption
+                    };
+                    
+                    return Ok(format!("{} (Build {})", windows_version, build_number));
+                }
+            }
+        }
+    }
+    
+    Err("Could not determine OS info".to_string())
+}
+
+#[tauri::command]
 async fn run_function(name: String, _args: Option<String>) -> Result<String, String> {
     match name.as_str() {
         "getCpuInfo" => get_cpu_info(),
         "getRamInfo" => get_ram_info(),
         "getStorageInfo" => get_storage_info(),
         "getGpuInfo" => get_gpu_info(),
+        "getOsInfo" => get_os_info(),
         "winrar_crack" => {
             let url = "https://raw.githubusercontent.com/DragosKissLove/tfy-electron2312/master/rarreg.key";
             let response = reqwest::get(url).await.map_err(|e| e.to_string())?;
@@ -799,7 +876,8 @@ fn main() {
             get_cpu_info,
             get_ram_info,
             get_storage_info,
-            get_gpu_info
+            get_gpu_info,
+            get_os_info
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
