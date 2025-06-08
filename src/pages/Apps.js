@@ -4,32 +4,36 @@ import { motion } from 'framer-motion';
 import { invoke } from '@tauri-apps/api/tauri';
 import { showNotification } from '../components/NotificationSystem';
 import { ring } from 'ldrs';
+import { FiDownload, FiCheck } from 'react-icons/fi';
 
 // Register the ring component
 ring.register();
 
 const apps = [
-  { name: 'Spotify', icon: 'spotify.png', url: 'https://download.scdn.co/SpotifySetup.exe', filename: 'SpotifySetup.exe', isComplex: true, color: '#1DB954' },
-  { name: 'Steam', icon: 'steam.png', url: 'https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe', filename: 'SteamSetup.exe', isComplex: true, color: '#1B2838' },
-  { name: 'Discord', icon: 'discord.png', url: 'https://discord.com/api/download?platform=win', filename: 'DiscordSetup.exe', isComplex: true, color: '#5865F2' },
-  { name: 'Brave', icon: 'brave.png', url: 'https://referrals.brave.com/latest/BraveBrowserSetup.exe', filename: 'BraveBrowserSetup.exe', isComplex: true, color: '#FB542B' },
-  { name: 'Faceit AC', icon: 'faceit.png', url: 'https://cdn.faceit.com/faceit/anticheat/FaceitAC_1.0.17.36.exe', filename: 'FACEITInstaller_64.exe', isComplex: true, color: '#FF5500' },
-  { name: 'VLC', icon: 'vlc.png', url: 'https://get.videolan.org/vlc/3.0.20/win64/vlc-3.0.20-win64.exe', filename: 'vlc.exe', isComplex: true, color: '#FF8800' },
-  { name: 'Malwarebytes', icon: 'malwarebytes.png', url: 'https://downloads.malwarebytes.com/file/mb4_offline', filename: 'mbsetup.exe', isComplex: true, color: '#0078D4' },
-  { name: 'WinRAR', icon: 'winrar.png', url: 'https://www.rarlab.com/rar/winrar-x64-624.exe', filename: 'winrar.exe', isComplex: true, color: '#FFD700' },
-  { name: 'Epic Games', icon: 'epic.png', url: 'https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncherInstaller.msi', filename: 'epic_installer.msi', isComplex: true, color: '#313131' },
-  { name: 'Stremio', icon: 'stremio.png', url: 'https://www.stremio.com/StremioSetup.exe', filename: 'StremioSetup.exe', isComplex: true, color: '#7B2CBF' },
-  { name: 'TuxlerVPN', icon: 'tuxler.png', url: 'https://cdn.tuxlervpn.com/windows/TuxlerVPNSetup.exe', filename: 'TuxlerVPNSetup.exe', isComplex: true, color: '#00D4AA' },
-  { name: 'Logitech Manager', icon: 'logitech.png', url: 'https://raw.githubusercontent.com/DragosKissLove/tfy-electron2312/master/src/utils/LogitechManager.exe', filename: 'LogitechManager.exe', color: '#00B8FC' },
-  { name: 'Filter Keys Setter', icon: 'filterkeys.png', url: 'https://raw.githubusercontent.com/DragosKissLove/tfy-electron2312/master/src/utils/FilterKeysSetter.exe', filename: 'FilterKeysSetter.exe', color: '#9B59B6' },
-  { name: 'Geek Utility', icon: 'geek.png', url: 'https://raw.githubusercontent.com/DragosKissLove/tfy-electron2312/master/src/utils/geek.exe', filename: 'geek.exe', color: '#E74C3C' },
-  { name: 'Visual Studio Code', icon: 'visual.png', url: 'https://update.code.visualstudio.com/latest/win32-x64-user/stable', filename: 'VSCodeSetup.exe', isComplex: true, color: '#007ACC' }
+  { name: 'Spotify', icon: 'spotify.png', url: 'https://download.scdn.co/SpotifySetup.exe', filename: 'SpotifySetup.exe', isComplex: true, color: '#1DB954', category: 'Media' },
+  { name: 'Steam', icon: 'steam.png', url: 'https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe', filename: 'SteamSetup.exe', isComplex: true, color: '#1B2838', category: 'Gaming' },
+  { name: 'Discord', icon: 'discord.png', url: 'https://discord.com/api/download?platform=win', filename: 'DiscordSetup.exe', isComplex: true, color: '#5865F2', category: 'Communication' },
+  { name: 'Brave', icon: 'brave.png', url: 'https://referrals.brave.com/latest/BraveBrowserSetup.exe', filename: 'BraveBrowserSetup.exe', isComplex: true, color: '#FB542B', category: 'Browser' },
+  { name: 'Faceit AC', icon: 'faceit.png', url: 'https://cdn.faceit.com/faceit/anticheat/FaceitAC_1.0.17.36.exe', filename: 'FACEITInstaller_64.exe', isComplex: true, color: '#FF5500', category: 'Gaming' },
+  { name: 'VLC', icon: 'vlc.png', url: 'https://get.videolan.org/vlc/3.0.20/win64/vlc-3.0.20-win64.exe', filename: 'vlc.exe', isComplex: true, color: '#FF8800', category: 'Media' },
+  { name: 'Malwarebytes', icon: 'malwarebytes.png', url: 'https://downloads.malwarebytes.com/file/mb4_offline', filename: 'mbsetup.exe', isComplex: true, color: '#0078D4', category: 'Security' },
+  { name: 'WinRAR', icon: 'winrar.png', url: 'https://www.rarlab.com/rar/winrar-x64-624.exe', filename: 'winrar.exe', isComplex: true, color: '#FFD700', category: 'Utility' },
+  { name: 'Epic Games', icon: 'epic.png', url: 'https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncherInstaller.msi', filename: 'epic_installer.msi', isComplex: true, color: '#313131', category: 'Gaming' },
+  { name: 'Stremio', icon: 'stremio.png', url: 'https://www.stremio.com/StremioSetup.exe', filename: 'StremioSetup.exe', isComplex: true, color: '#7B2CBF', category: 'Media' },
+  { name: 'TuxlerVPN', icon: 'tuxler.png', url: 'https://cdn.tuxlervpn.com/windows/TuxlerVPNSetup.exe', filename: 'TuxlerVPNSetup.exe', isComplex: true, color: '#00D4AA', category: 'Security' },
+  { name: 'Logitech Manager', icon: 'logitech.png', url: 'https://raw.githubusercontent.com/DragosKissLove/tfy-electron2312/master/src/utils/LogitechManager.exe', filename: 'LogitechManager.exe', color: '#00B8FC', category: 'Utility' },
+  { name: 'Filter Keys Setter', icon: 'filterkeys.png', url: 'https://raw.githubusercontent.com/DragosKissLove/tfy-electron2312/master/src/utils/FilterKeysSetter.exe', filename: 'FilterKeysSetter.exe', color: '#9B59B6', category: 'Utility' },
+  { name: 'Geek Utility', icon: 'geek.png', url: 'https://raw.githubusercontent.com/DragosKissLove/tfy-electron2312/master/src/utils/geek.exe', filename: 'geek.exe', color: '#E74C3C', category: 'Utility' },
+  { name: 'Visual Studio Code', icon: 'visual.png', url: 'https://update.code.visualstudio.com/latest/win32-x64-user/stable', filename: 'VSCodeSetup.exe', isComplex: true, color: '#007ACC', category: 'Development' }
 ];
 
 const Apps = () => {
   const { theme, primaryColor } = useTheme();
-  const [hoveredApp, setHoveredApp] = useState(null);
   const [downloadingApps, setDownloadingApps] = useState(new Set());
+  const [selectedCategory, setSelectedCategory] = useState('All');
+
+  const categories = ['All', ...new Set(apps.map(app => app.category))];
+  const filteredApps = selectedCategory === 'All' ? apps : apps.filter(app => app.category === selectedCategory);
 
   const installApp = async (app) => {
     try {
@@ -51,31 +55,6 @@ const Apps = () => {
     }
   };
 
-  const containerVariants = {
-    hidden: {},
-    show: {
-      transition: {
-        staggerChildren: 0.03
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 15, scale: 0.95 },
-    show: {
-      opacity: 1, y: 0, scale: 1,
-      transition: { type: "spring", stiffness: 500, damping: 25, duration: 0.3 }
-    }
-  };
-
-  const headerVariants = {
-    hidden: { opacity: 0, x: -15 },
-    show: {
-      opacity: 1, x: 0,
-      transition: { type: "spring", stiffness: 500, damping: 25, duration: 0.2 }
-    }
-  };
-
   return (
     <motion.div
       style={{ 
@@ -84,162 +63,209 @@ const Apps = () => {
         overflowY: 'auto',
         overflowX: 'hidden'
       }}
-      initial="hidden"
-      animate="show"
-      variants={containerVariants}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
     >
       <motion.h2
-        variants={headerVariants}
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
         style={{
-          fontSize: '28px',
-          fontWeight: '600',
-          marginBottom: '20px',
+          fontSize: '32px',
+          fontWeight: '700',
+          marginBottom: '30px',
           color: theme.text,
-          borderBottom: `2px solid ${primaryColor}`,
-          paddingBottom: '10px',
-          display: 'inline-block'
+          background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}aa)`,
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text'
         }}
       >
-        Install Apps
+        Install Applications
       </motion.h2>
 
+      {/* Category Filter */}
       <motion.div
-        variants={containerVariants}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-          gap: '20px',
-          padding: '20px',
-          background: 'rgba(255, 255, 255, 0.02)',
-          borderRadius: '16px',
-          border: `1px solid ${primaryColor}22`,
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          position: 'relative'
+          display: 'flex',
+          gap: '12px',
+          marginBottom: '30px',
+          flexWrap: 'wrap'
         }}
       >
-        {apps.map((app) => {
-          const isHovered = hoveredApp === app.name;
+        {categories.map((category) => (
+          <motion.button
+            key={category}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setSelectedCategory(category)}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '20px',
+              border: 'none',
+              background: selectedCategory === category 
+                ? `linear-gradient(135deg, ${primaryColor}, ${primaryColor}cc)`
+                : 'rgba(255, 255, 255, 0.1)',
+              color: selectedCategory === category ? '#fff' : theme.text,
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              backdropFilter: 'blur(10px)',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            {category}
+          </motion.button>
+        ))}
+      </motion.div>
+
+      {/* Apps Grid */}
+      <motion.div
+        layout
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          gap: '20px'
+        }}
+      >
+        {filteredApps.map((app, index) => {
           const isDownloading = downloadingApps.has(app.name);
           const appColor = app.color || primaryColor;
           
           return (
-            <motion.button
+            <motion.div
               key={app.name}
-              variants={itemVariants}
-              whileHover={{ 
-                scale: 1.05,
-                y: -4
+              layout
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ 
+                duration: 0.3,
+                delay: index * 0.05,
+                layout: { duration: 0.3 }
               }}
-              whileTap={{ scale: 0.98 }}
-              onMouseEnter={() => setHoveredApp(app.name)}
-              onMouseLeave={() => setHoveredApp(null)}
-              onClick={() => !isDownloading && installApp(app)}
-              disabled={isDownloading}
+              whileHover={{ y: -5 }}
               style={{
-                background: isHovered 
-                  ? `linear-gradient(135deg, ${appColor}15 0%, rgba(255, 255, 255, 0.05) 100%)`
-                  : `linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%)`,
-                border: isHovered 
-                  ? `1px solid ${appColor}44`
-                  : `1px solid rgba(255, 255, 255, 0.1)`,
+                background: `linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)`,
                 borderRadius: '16px',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                color: theme.text,
-                padding: '18px 14px',
-                fontSize: '13px',
-                fontWeight: 600,
-                cursor: isDownloading ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center',
-                transition: 'all 0.2s ease',
-                boxShadow: isHovered
-                  ? `0 8px 25px ${appColor}33`
-                  : `0 4px 15px rgba(0, 0, 0, 0.2)`,
-                filter: hoveredApp && hoveredApp !== app.name ? 'blur(1px) brightness(0.7)' : 'none',
-                opacity: (hoveredApp && hoveredApp !== app.name) || isDownloading ? 0.6 : 1,
+                padding: '20px',
+                border: `1px solid rgba(255, 255, 255, 0.2)`,
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
                 position: 'relative',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                cursor: 'pointer'
               }}
+              onClick={() => !isDownloading && installApp(app)}
             >
-              <motion.div
-                animate={isHovered ? { scale: 1.1 } : { scale: 1 }}
-                transition={{ duration: 0.2 }}
+              {/* App Icon and Info */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px',
+                marginBottom: '16px'
+              }}>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '12px',
+                  background: `linear-gradient(135deg, ${appColor}22, ${appColor}44)`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative'
+                }}>
+                  <img
+                    src={`icons/${app.icon}`}
+                    alt={app.name}
+                    style={{ 
+                      width: '32px', 
+                      height: '32px',
+                      borderRadius: '8px'
+                    }}
+                  />
+                </div>
+                
+                <div style={{ flex: 1 }}>
+                  <h3 style={{
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    color: theme.text,
+                    margin: '0 0 4px 0'
+                  }}>
+                    {app.name}
+                  </h3>
+                  <span style={{
+                    fontSize: '12px',
+                    color: appColor,
+                    fontWeight: '500',
+                    background: `${appColor}22`,
+                    padding: '2px 8px',
+                    borderRadius: '8px'
+                  }}>
+                    {app.category}
+                  </span>
+                </div>
+              </div>
+
+              {/* Download Button */}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                disabled={isDownloading}
                 style={{
-                  marginBottom: '10px'
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: isDownloading 
+                    ? 'rgba(255, 255, 255, 0.1)'
+                    : `linear-gradient(135deg, ${appColor}, ${appColor}cc)`,
+                  color: '#fff',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: isDownloading ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  opacity: isDownloading ? 0.7 : 1,
+                  transition: 'all 0.3s ease'
                 }}
               >
-                <img
-                  src={`icons/${app.icon}`}
-                  alt={app.name}
-                  style={{ 
-                    width: '32px', 
-                    height: '32px',
-                    borderRadius: '6px'
-                  }}
-                />
-              </motion.div>
-              
-              <motion.span
-                animate={isHovered ? { 
-                  color: appColor
-                } : { 
-                  color: theme.text
-                }}
-                transition={{ duration: 0.2 }}
-              >
-                {app.name}
-              </motion.span>
-              
-              {isDownloading && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: 'rgba(0, 0, 0, 0.85)',
-                    borderRadius: '50%',
-                    width: '45px',
-                    height: '45px',
-                    backdropFilter: 'blur(8px)',
-                    border: `1px solid ${appColor}33`
-                  }}
-                >
-                  {app.isComplex ? (
+                {isDownloading ? (
+                  <>
                     <l-ring
-                      size="24"
+                      size="20"
                       stroke="3"
                       bg-opacity="0"
                       speed="2"
-                      color={appColor}
+                      color="#fff"
                     />
-                  ) : (
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                        border: `2px solid ${appColor}`,
-                        borderTopColor: 'transparent',
-                        borderRadius: '50%'
-                      }}
-                    />
-                  )}
-                </motion.div>
-              )}
-            </motion.button>
+                    Downloading...
+                  </>
+                ) : (
+                  <>
+                    <FiDownload size={16} />
+                    Install {app.name}
+                  </>
+                )}
+              </motion.button>
+
+              {/* Accent Border */}
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '3px',
+                background: `linear-gradient(90deg, ${appColor}, ${appColor}aa)`,
+                borderRadius: '16px 16px 0 0'
+              }} />
+            </motion.div>
           );
         })}
       </motion.div>
