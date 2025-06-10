@@ -182,6 +182,7 @@ async fn download_player(version_hash: String) -> Result<String, String> {
 fn get_cpu_info() -> Result<String, String> {
     let output = Command::new("wmic")
         .args(&["cpu", "get", "name,numberofcores", "/format:csv"])
+        .creation_flags(0x08000000) // CREATE_NO_WINDOW
         .output()
         .map_err(|e| format!("Failed to get CPU info: {}", e))?;
 
@@ -217,6 +218,7 @@ fn get_ram_info() -> Result<String, String> {
     // Get total RAM
     let ram_output = Command::new("wmic")
         .args(&["computersystem", "get", "TotalPhysicalMemory", "/format:csv"])
+        .creation_flags(0x08000000) // CREATE_NO_WINDOW
         .output()
         .map_err(|e| format!("Failed to get RAM info: {}", e))?;
 
@@ -238,6 +240,7 @@ fn get_ram_info() -> Result<String, String> {
     // Get RAM speed
     let speed_output = Command::new("wmic")
         .args(&["memorychip", "get", "speed", "/format:csv"])
+        .creation_flags(0x08000000) // CREATE_NO_WINDOW
         .output()
         .map_err(|e| format!("Failed to get RAM speed: {}", e))?;
 
@@ -273,6 +276,7 @@ fn get_ram_info() -> Result<String, String> {
 fn get_storage_info() -> Result<String, String> {
     let output = Command::new("wmic")
         .args(&["diskdrive", "get", "size,model,mediatype", "/format:csv"])
+        .creation_flags(0x08000000) // CREATE_NO_WINDOW
         .output()
         .map_err(|e| format!("Failed to get storage info: {}", e))?;
 
@@ -313,6 +317,7 @@ fn get_storage_info() -> Result<String, String> {
 fn get_gpu_info() -> Result<String, String> {
     let output = Command::new("wmic")
         .args(&["path", "win32_VideoController", "get", "name,driverversion", "/format:csv"])
+        .creation_flags(0x08000000) // CREATE_NO_WINDOW
         .output()
         .map_err(|e| format!("Failed to get GPU info: {}", e))?;
 
@@ -347,6 +352,7 @@ fn get_gpu_info() -> Result<String, String> {
 fn get_os_info() -> Result<String, String> {
     let output = Command::new("wmic")
         .args(&["os", "get", "caption,version,buildnumber", "/format:csv"])
+        .creation_flags(0x08000000) // CREATE_NO_WINDOW
         .output()
         .map_err(|e| format!("Failed to get OS info: {}", e))?;
 
@@ -384,6 +390,76 @@ fn get_os_info() -> Result<String, String> {
 }
 
 #[tauri::command]
+async fn check_for_updates() -> Result<serde_json::Value, String> {
+    let current_version = "3.0.0";
+    let api_url = "https://api.github.com/repos/DragosKissLove/test-smt/releases/latest";
+    
+    let client = reqwest::Client::new();
+    let response = client
+        .get(api_url)
+        .header("User-Agent", "TFY-Tool")
+        .send()
+        .await
+        .map_err(|e| format!("Failed to check for updates: {}", e))?;
+    
+    let release_data: serde_json::Value = response
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse release data: {}", e))?;
+    
+    let latest_version = release_data["tag_name"]
+        .as_str()
+        .unwrap_or(current_version);
+    
+    let download_url = release_data["assets"]
+        .as_array()
+        .and_then(|assets| assets.first())
+        .and_then(|asset| asset["browser_download_url"].as_str())
+        .unwrap_or("");
+    
+    let changelog = release_data["body"]
+        .as_str()
+        .unwrap_or("No changelog available");
+    
+    Ok(serde_json::json!({
+        "current_version": current_version,
+        "latest_version": latest_version,
+        "has_update": latest_version != current_version,
+        "download_url": download_url,
+        "changelog": changelog
+    }))
+}
+
+#[tauri::command]
+async fn download_update(download_url: String) -> Result<String, String> {
+    let response = reqwest::get(&download_url)
+        .await
+        .map_err(|e| format!("Failed to download update: {}", e))?;
+    
+    let bytes = response
+        .bytes()
+        .await
+        .map_err(|e| format!("Failed to read update data: {}", e))?;
+    
+    let desktop = dirs::desktop_dir().ok_or("Could not find desktop directory")?;
+    let update_path = desktop.join("TFY-Tool-Update.exe");
+    
+    std::fs::write(&update_path, bytes)
+        .map_err(|e| format!("Failed to save update: {}", e))?;
+    
+    // Launch the update
+    #[cfg(target_os = "windows")]
+    {
+        Command::new("cmd")
+            .args(&["/C", "start", "", update_path.to_str().unwrap()])
+            .spawn()
+            .map_err(|e| format!("Failed to launch update: {}", e))?;
+    }
+    
+    Ok("Update downloaded and launched successfully!".to_string())
+}
+
+#[tauri::command]
 async fn run_function(name: String, _args: Option<String>) -> Result<String, String> {
     match name.as_str() {
         "getCpuInfo" => get_cpu_info(),
@@ -418,6 +494,7 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
                         winrar_path
                     )
                 ])
+                .creation_flags(0x08000000) // CREATE_NO_WINDOW
                 .status()
                 .map_err(|e| format!("Failed to execute PowerShell command: {}", e))?;
 
@@ -432,6 +509,7 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
         "clean_temp" => {
             Command::new("cmd")
                 .args(&["/C", "del /s /f /q %temp%\\* && del /s /f /q C:\\Windows\\Temp\\*"])
+                .creation_flags(0x08000000) // CREATE_NO_WINDOW
                 .output()
                 .map_err(|e| e.to_string())?;
             
@@ -447,6 +525,7 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
             
             Command::new("powershell")
                 .args(&["-Command", &format!("Start-Process '{}' -Verb RunAs", temp_path.display())])
+                .creation_flags(0x08000000) // CREATE_NO_WINDOW
                 .spawn()
                 .map_err(|e| e.to_string())?;
             
@@ -455,6 +534,7 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
         "activate_windows" => {
             Command::new("powershell")
                 .args(&["-Command", "irm https://get.activated.win | iex"])
+                .creation_flags(0x08000000) // CREATE_NO_WINDOW
                 .spawn()
                 .map_err(|e| e.to_string())?;
             
@@ -489,6 +569,7 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
                 let path = entry.path();
                 if path.extension().and_then(|s| s.to_str()) == Some("exe") {
                     Command::new(&path)
+                        .creation_flags(0x08000000) // CREATE_NO_WINDOW
                         .spawn()
                         .map_err(|e| e.to_string())?;
                     return Ok("Atlas tools installed successfully".to_string());
@@ -500,6 +581,7 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
         "wifi_passwords" => {
             let output = Command::new("netsh")
                 .args(&["wlan", "show", "profiles"])
+                .creation_flags(0x08000000) // CREATE_NO_WINDOW
                 .output()
                 .map_err(|e| e.to_string())?;
 
@@ -512,6 +594,7 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
                         let profile = profile.trim();
                         let pw_output = Command::new("netsh")
                             .args(&["wlan", "show", "profile", "name", profile, "key=clear"])
+                            .creation_flags(0x08000000) // CREATE_NO_WINDOW
                             .output()
                             .map_err(|e| e.to_string())?;
 
@@ -544,7 +627,11 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
             ];
 
             for cmd in commands {
-                Command::new("cmd").args(&["/C", cmd]).output().map_err(|e| e.to_string())?;
+                Command::new("cmd")
+                    .args(&["/C", cmd])
+                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                    .output()
+                    .map_err(|e| e.to_string())?;
             }
 
             Ok("Notifications disabled successfully".to_string())
@@ -560,7 +647,11 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
             ];
 
             for cmd in commands {
-                Command::new("cmd").args(&["/C", cmd]).output().ok();
+                Command::new("cmd")
+                    .args(&["/C", cmd])
+                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                    .output()
+                    .ok();
             }
 
             Ok("Notifications enabled successfully".to_string())
@@ -593,6 +684,7 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
             
             Command::new("reg")
                 .args(&["import", temp_file.to_str().unwrap()])
+                .creation_flags(0x08000000) // CREATE_NO_WINDOW
                 .output()
                 .map_err(|e| e.to_string())?;
 
@@ -627,6 +719,7 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
             
             Command::new("reg")
                 .args(&["import", temp_file.to_str().unwrap()])
+                .creation_flags(0x08000000) // CREATE_NO_WINDOW
                 .output()
                 .map_err(|e| e.to_string())?;
 
@@ -652,7 +745,11 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
             ];
 
             for cmd in commands {
-                Command::new("cmd").args(&["/C", cmd]).output().ok();
+                Command::new("cmd")
+                    .args(&["/C", cmd])
+                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                    .output()
+                    .ok();
             }
 
             Ok("VPN services disabled successfully".to_string())
@@ -672,7 +769,11 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
             ];
 
             for cmd in commands {
-                Command::new("cmd").args(&["/C", cmd]).output().ok();
+                Command::new("cmd")
+                    .args(&["/C", cmd])
+                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                    .output()
+                    .ok();
             }
 
             Ok("VPN services enabled successfully".to_string())
@@ -690,7 +791,11 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
             ];
 
             for cmd in commands {
-                Command::new("cmd").args(&["/C", cmd]).output().ok();
+                Command::new("cmd")
+                    .args(&["/C", cmd])
+                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                    .output()
+                    .ok();
             }
 
             Ok("Printing services disabled successfully".to_string())
@@ -707,7 +812,11 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
             ];
 
             for cmd in commands {
-                Command::new("cmd").args(&["/C", cmd]).output().ok();
+                Command::new("cmd")
+                    .args(&["/C", cmd])
+                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                    .output()
+                    .ok();
             }
 
             Ok("Printing services enabled successfully".to_string())
@@ -733,7 +842,11 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
             ];
 
             for cmd in commands {
-                Command::new("cmd").args(&["/C", cmd]).output().ok();
+                Command::new("cmd")
+                    .args(&["/C", cmd])
+                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                    .output()
+                    .ok();
             }
 
             Ok("Bluetooth disabled successfully".to_string())
@@ -759,7 +872,11 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
             ];
 
             for cmd in commands {
-                Command::new("cmd").args(&["/C", cmd]).output().ok();
+                Command::new("cmd")
+                    .args(&["/C", cmd])
+                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                    .output()
+                    .ok();
             }
 
             Ok("Bluetooth enabled successfully".to_string())
@@ -776,6 +893,7 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
             
             Command::new("reg")
                 .args(&["import", temp_file.to_str().unwrap()])
+                .creation_flags(0x08000000) // CREATE_NO_WINDOW
                 .output()
                 .map_err(|e| e.to_string())?;
 
@@ -789,7 +907,11 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
             ];
 
             for cmd in commands {
-                Command::new("cmd").args(&["/C", cmd]).output().ok();
+                Command::new("cmd")
+                    .args(&["/C", cmd])
+                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                    .output()
+                    .ok();
             }
 
             Ok("Game mode enabled successfully".to_string())
@@ -808,6 +930,7 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
             
             Command::new("reg")
                 .args(&["import", temp_file.to_str().unwrap()])
+                .creation_flags(0x08000000) // CREATE_NO_WINDOW
                 .output()
                 .map_err(|e| e.to_string())?;
 
@@ -821,7 +944,11 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
             ];
 
             for cmd in commands {
-                Command::new("cmd").args(&["/C", cmd]).output().ok();
+                Command::new("cmd")
+                    .args(&["/C", cmd])
+                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                    .output()
+                    .ok();
             }
 
             Ok("Background apps enabled successfully".to_string())
@@ -833,7 +960,11 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
             ];
 
             for cmd in commands {
-                Command::new("cmd").args(&["/C", cmd]).output().ok();
+                Command::new("cmd")
+                    .args(&["/C", cmd])
+                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                    .output()
+                    .ok();
             }
 
             Ok("Search indexing disabled successfully".to_string())
@@ -845,7 +976,11 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
             ];
 
             for cmd in commands {
-                Command::new("cmd").args(&["/C", cmd]).output().ok();
+                Command::new("cmd")
+                    .args(&["/C", cmd])
+                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                    .output()
+                    .ok();
             }
 
             Ok("Search indexing enabled successfully".to_string())
@@ -881,6 +1016,7 @@ fn download_to_desktop_and_run(name: String, url: String) -> Result<String, Stri
     {
         let status = Command::new("cmd")
             .args(&["/C", "start", "", file_path.to_str().unwrap()])
+            .creation_flags(0x08000000) // CREATE_NO_WINDOW
             .status()
             .map_err(|e| format!("❌ Failed to execute file: {}", e))?;
         
@@ -912,7 +1048,9 @@ fn main() {
             get_ram_info,
             get_storage_info,
             get_gpu_info,
-            get_os_info
+            get_os_info,
+            check_for_updates,
+            download_update
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

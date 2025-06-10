@@ -36,9 +36,9 @@ const Apps = () => {
       setDownloadingApps(prev => new Set([...prev, app.name]));
       showNotification('info', 'Download Started', `Downloading ${app.name}...`);
       
-      await invoke('download_app', { url: app.url, filename: app.filename });
+      const result = await invoke('download_app', { url: app.url, filename: app.filename });
       
-      showNotification('success', 'Download Complete', `${app.name} has been downloaded and launched successfully!`);
+      showNotification('success', 'Download Complete', result);
     } catch (e) {
       console.error(`Error installing ${app.name}:`, e);
       showNotification('error', 'Download Failed', `Failed to download ${app.name}: ${e}`);

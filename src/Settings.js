@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from './ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiRefreshCw, FiDroplet, FiMonitor, FiDownload, FiCheck, FiUser, FiSettings, FiStar, FiCpu, FiInfo, FiHardDrive, FiZap } from 'react-icons/fi';
-import UpdateNotification from './components/UpdateNotification';
 import { invoke } from '@tauri-apps/api/tauri';
+import { showNotification } from './components/NotificationSystem';
 
 const colorPresets = [
   { name: 'Crimson', color: '#DC2626', gradient: 'linear-gradient(135deg, #DC2626, #EF4444)' },
@@ -20,8 +20,6 @@ const Settings = () => {
   const { primaryColor, setPrimaryColor, theme } = useTheme();
   const [updateStatus, setUpdateStatus] = useState('');
   const [isChecking, setIsChecking] = useState(false);
-  const [updateInfo, setUpdateInfo] = useState(null);
-  const [downloadProgress, setDownloadProgress] = useState(null);
   const [selectedPreset, setSelectedPreset] = useState(null);
   const [username, setUsername] = useState('User');
   const [activeSection, setActiveSection] = useState('appearance');
@@ -36,7 +34,7 @@ const Settings = () => {
   useEffect(() => {
     // Find which preset matches current color
     const preset = colorPresets.find(p => p.color === primaryColor);
-    setSelectedPreset(preset?.name || 'Custom');
+    setSelectedPreset(preset?.name || null);
 
     // Get comprehensive system information
     const getSystemInfo = async () => {
@@ -85,34 +83,11 @@ const Settings = () => {
     };
 
     getSystemInfo();
-
-    if (window.electron) {
-      window.electron.onUpdateStatus((event, message) => {
-        setUpdateStatus(message);
-      });
-
-      window.electron.onUpdateAvailable((event, info) => {
-        setUpdateInfo(info);
-      });
-
-      window.electron.onUpdateNotAvailable(() => {
-        setUpdateStatus('You have the latest version!');
-        setTimeout(() => setUpdateStatus(''), 3000);
-      });
-
-      window.electron.onDownloadProgress((event, progress) => {
-        setDownloadProgress(progress.percent);
-      });
-
-      window.electron.onUpdateDownloaded(() => {
-        setDownloadProgress(100);
-      });
-    }
   }, [primaryColor]);
 
   const handleColorChange = (e) => {
     setPrimaryColor(e.target.value);
-    setSelectedPreset('Custom');
+    setSelectedPreset(null);
   };
 
   const handlePresetSelect = (preset) => {
@@ -124,19 +99,36 @@ const Settings = () => {
     try {
       setIsChecking(true);
       setUpdateStatus('Checking for updates...');
-      await window.electron.startUpdate();
+      showNotification('info', 'Update Check', 'Checking for updates...');
+      
+      const updateInfo = await invoke('check_for_updates');
+      
+      if (updateInfo.has_update) {
+        setUpdateStatus(`Update available: ${updateInfo.latest_version}`);
+        showNotification('info', 'Update Available', `Version ${updateInfo.latest_version} is available!`);
+        
+        const shouldUpdate = window.confirm(
+          `Update available!\n\nCurrent: ${updateInfo.current_version}\nLatest: ${updateInfo.latest_version}\n\nChangelog:\n${updateInfo.changelog}\n\nDownload and install now?`
+        );
+        
+        if (shouldUpdate) {
+          setUpdateStatus('Downloading update...');
+          showNotification('info', 'Downloading', 'Downloading update...');
+          
+          const result = await invoke('download_update', { download_url: updateInfo.download_url });
+          setUpdateStatus(result);
+          showNotification('success', 'Update Downloaded', 'Update downloaded and launched!');
+        }
+      } else {
+        setUpdateStatus('You have the latest version!');
+        showNotification('success', 'Up to Date', 'You have the latest version!');
+      }
     } catch (error) {
-      setUpdateStatus(`Error checking updates: ${error.message}`);
+      setUpdateStatus(`Error checking updates: ${error}`);
+      showNotification('error', 'Update Error', `Error checking updates: ${error}`);
     } finally {
       setIsChecking(false);
-    }
-  };
-
-  const handleInstallUpdate = async () => {
-    if (downloadProgress === 100) {
-      await window.electron.installUpdate();
-    } else {
-      await window.electron.startUpdate();
+      setTimeout(() => setUpdateStatus(''), 5000);
     }
   };
 
@@ -411,7 +403,7 @@ const Settings = () => {
                   ))}
                 </div>
 
-                {/* Custom Color Picker - Made smaller */}
+                {/* Custom Color Picker */}
                 <div style={{
                   padding: '24px',
                   borderRadius: '16px',
@@ -542,8 +534,8 @@ const Settings = () => {
                   onClick={handleCheckUpdates}
                   disabled={isChecking}
                   style={{
-                    padding: '12px 24px',
-                    borderRadius: '12px',
+                    padding: '10px 20px',
+                    borderRadius: '10px',
                     border: 'none',
                     background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}cc)`,
                     color: '#fff',
@@ -905,12 +897,6 @@ const Settings = () => {
           )}
         </AnimatePresence>
       </div>
-
-      <UpdateNotification 
-        updateInfo={updateInfo}
-        onInstall={handleInstallUpdate}
-        downloadProgress={downloadProgress}
-      />
 
       <style>
         {`
