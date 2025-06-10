@@ -44,14 +44,36 @@ async fn download_app(url: String, filename: String) -> Result<String, String> {
     // Use Windows-specific command to run the executable
     #[cfg(target_os = "windows")]
     {
-        let status = Command::new("cmd")
-            .args(&["/C", "start", "", path.to_str().unwrap()])
-            .creation_flags(0x08000000) // CREATE_NO_WINDOW
-            .status()
-            .map_err(|e| format!("❌ Failed to execute file: {}", e))?;
-        
-        if !status.success() {
-            return Err(format!("❌ Failed to launch installer (exit code: {})", status.code().unwrap_or(-1)));
+        // Try direct execution first
+        match Command::new(&path).spawn() {
+            Ok(_) => {
+                return Ok(format!("✅ {} downloaded and launched successfully!", filename.replace(".exe", "")));
+            }
+            Err(_) => {
+                // If direct execution fails, try with explorer
+                match Command::new("explorer")
+                    .arg(&path)
+                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                    .spawn() {
+                    Ok(_) => {
+                        return Ok(format!("✅ {} downloaded and opened with explorer!", filename.replace(".exe", "")));
+                    }
+                    Err(_) => {
+                        // Last resort: try with cmd /c
+                        let status = Command::new("cmd")
+                            .args(&["/c", &format!("\"{}\"", path.display())])
+                            .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                            .status()
+                            .map_err(|e| format!("❌ Failed to execute file: {}", e))?;
+                        
+                        if status.success() {
+                            return Ok(format!("✅ {} downloaded and launched successfully!", filename.replace(".exe", "")));
+                        } else {
+                            return Err(format!("❌ Failed to launch installer. Please run {} manually from Desktop/tfy-downloads/", filename));
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -61,9 +83,9 @@ async fn download_app(url: String, filename: String) -> Result<String, String> {
             .arg(&path)
             .spawn()
             .map_err(|e| format!("❌ Failed to open file: {}", e))?;
+        
+        Ok(format!("✅ {} downloaded and launched successfully!", filename.replace(".exe", "")))
     }
-
-    Ok(format!("✅ {} downloaded and launched successfully!", filename.replace(".exe", "")))
 }
 
 #[tauri::command]
@@ -1215,14 +1237,36 @@ fn download_to_desktop_and_run(name: String, url: String) -> Result<String, Stri
     // Use Windows-specific command to run the executable
     #[cfg(target_os = "windows")]
     {
-        let status = Command::new("cmd")
-            .args(&["/C", "start", "", file_path.to_str().unwrap()])
-            .creation_flags(0x08000000) // CREATE_NO_WINDOW
-            .status()
-            .map_err(|e| format!("❌ Failed to execute file: {}", e))?;
-        
-        if !status.success() {
-            return Err(format!("❌ Failed to launch installer (exit code: {})", status.code().unwrap_or(-1)));
+        // Try direct execution first
+        match Command::new(&file_path).spawn() {
+            Ok(_) => {
+                return Ok(format!("✅ {} downloaded and launched from Desktop!", name));
+            }
+            Err(_) => {
+                // If direct execution fails, try with explorer
+                match Command::new("explorer")
+                    .arg(&file_path)
+                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                    .spawn() {
+                    Ok(_) => {
+                        return Ok(format!("✅ {} downloaded and opened with explorer!", name));
+                    }
+                    Err(_) => {
+                        // Last resort: try with cmd /c
+                        let status = Command::new("cmd")
+                            .args(&["/c", &format!("\"{}\"", file_path.display())])
+                            .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                            .status()
+                            .map_err(|e| format!("❌ Failed to execute file: {}", e))?;
+                        
+                        if status.success() {
+                            return Ok(format!("✅ {} downloaded and launched from Desktop!", name));
+                        } else {
+                            return Err(format!("❌ Failed to launch installer. Please run {} manually from Desktop.", name));
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -1232,9 +1276,9 @@ fn download_to_desktop_and_run(name: String, url: String) -> Result<String, Stri
             .arg(&file_path)
             .spawn()
             .map_err(|e| format!("❌ Failed to open file: {}", e))?;
+        
+        Ok(format!("✅ {} downloaded and launched from Desktop!", name))
     }
-
-    Ok(format!("✅ {} downloaded and launched from Desktop!", name))
 }
 
 fn main() {
