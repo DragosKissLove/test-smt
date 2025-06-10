@@ -61,9 +61,9 @@ const Extra = () => {
       showNotification('info', 'Roblox Downgrade', 'Starting Roblox downgrade process...');
 
       const result = await invoke('download_player', { 
-        version_hash: robloxVersion,
+        versionHash: robloxVersion,
         channel: 'LIVE',
-        binary_type: 'WindowsPlayer'
+        binaryType: 'WindowsPlayer'
       });
       
       setStatus(result || '✅ Roblox downgrade completed successfully!');
