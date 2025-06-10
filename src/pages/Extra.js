@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../ThemeContext';
-import { FiDownload, FiRefreshCw, FiClock } from 'react-icons/fi';
+import { FiDownload, FiRefreshCw, FiClock, FiSettings } from 'react-icons/fi';
 import { invoke } from '@tauri-apps/api/tauri';
 import { showNotification } from '../components/NotificationSystem';
 import { ring } from 'ldrs';
@@ -14,14 +14,31 @@ const Extra = () => {
   const [status, setStatus] = useState('');
   const [robloxVersion, setRobloxVersion] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
-  const [versions, setVersions] = useState([]);
+  const [savedVersions, setSavedVersions] = useState([]);
   const [activeButton, setActiveButton] = useState(null);
+  const [selectedChannel, setSelectedChannel] = useState('LIVE');
+  const [selectedBinaryType, setSelectedBinaryType] = useState('WindowsPlayer');
+
+  const channels = ['LIVE', 'zcanary', 'zintegration'];
+  const binaryTypes = [
+    { value: 'WindowsPlayer', label: 'Windows Player' },
+    { value: 'WindowsStudio64', label: 'Windows Studio 64' },
+    { value: 'MacPlayer', label: 'Mac Player' },
+    { value: 'MacStudio', label: 'Mac Studio' }
+  ];
 
   useEffect(() => {
-    fetch('https://raw.githubusercontent.com/DragosKissLove/testbot/main/versions.json')
-      .then(res => res.json())
-      .then(data => setVersions(data))
-      .catch(err => console.error('Failed to fetch versions:', err));
+    // Load saved versions from the API
+    const loadSavedVersions = async () => {
+      try {
+        const versions = await invoke('get_saved_versions');
+        setSavedVersions(versions);
+      } catch (error) {
+        console.error('Failed to load saved versions:', error);
+      }
+    };
+
+    loadSavedVersions();
   }, []);
 
   const handleClick = async (name, url) => {
@@ -53,7 +70,12 @@ const Extra = () => {
       setStatus('Starting Roblox downgrade...');
       showNotification('info', 'Roblox Downgrade', 'Starting Roblox downgrade process...');
 
-      const result = await invoke('download_player', { version_hash: robloxVersion });
+      const result = await invoke('download_player', { 
+        version_hash: robloxVersion,
+        channel: selectedChannel,
+        binary_type: selectedBinaryType
+      });
+      
       setStatus(result || '✅ Roblox downgrade completed successfully!');
       showNotification('success', 'Roblox Downgrade Complete', 'Roblox has been successfully downgraded!');
     } catch (error) {
@@ -61,6 +83,16 @@ const Extra = () => {
       showNotification('error', 'Downgrade Failed', `Roblox downgrade failed: ${error}`);
     } finally {
       setIsDownloading(false);
+    }
+  };
+
+  const handleVersionSelect = (event) => {
+    const selectedVersion = event.target.value;
+    if (selectedVersion) {
+      const version = savedVersions.find(v => `${v.hash} – ${v.description}` === selectedVersion);
+      if (version) {
+        setRobloxVersion(version.hash);
+      }
     }
   };
 
@@ -134,40 +166,132 @@ const Extra = () => {
           zIndex: 1
         }}>Roblox Downgrade</h3>
 
-        <div style={{
-          marginBottom: '20px',
-          fontSize: '12px',
-          opacity: 0.4,
-          color: theme.text,
-          fontFamily: 'monospace',
-          position: 'relative',
-          zIndex: 1
-        }}>
-          {versions.map((v, i) => (
-            <div key={i} style={{ marginBottom: '4px' }}>
-              {v.version}: {v.hash}
-            </div>
-          ))}
+        {/* Channel Selection */}
+        <div style={{ marginBottom: '16px', position: 'relative', zIndex: 1 }}>
+          <label style={{ 
+            display: 'block', 
+            marginBottom: '8px', 
+            color: theme.text, 
+            fontSize: '14px',
+            fontWeight: '500'
+          }}>
+            Channel:
+          </label>
+          <select
+            value={selectedChannel}
+            onChange={(e) => setSelectedChannel(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '10px',
+              borderRadius: '8px',
+              border: `1px solid ${primaryColor}33`,
+              background: theme.cardBg,
+              color: theme.text,
+              outline: 'none',
+              fontSize: '14px'
+            }}
+          >
+            {channels.map(channel => (
+              <option key={channel} value={channel}>{channel}</option>
+            ))}
+          </select>
         </div>
 
-        <input
-          type="text"
-          value={robloxVersion}
-          onChange={(e) => setRobloxVersion(e.target.value)}
-          placeholder="Enter Roblox version hash"
-          style={{
-            width: '100%',
-            padding: '10px',
-            marginBottom: '10px',
-            borderRadius: '8px',
-            border: `1px solid ${primaryColor}33`,
-            background: theme.cardBg,
-            color: theme.text,
-            outline: 'none',
-            position: 'relative',
-            zIndex: 1
-          }}
-        />
+        {/* Binary Type Selection */}
+        <div style={{ marginBottom: '16px', position: 'relative', zIndex: 1 }}>
+          <label style={{ 
+            display: 'block', 
+            marginBottom: '8px', 
+            color: theme.text, 
+            fontSize: '14px',
+            fontWeight: '500'
+          }}>
+            Binary Type:
+          </label>
+          <select
+            value={selectedBinaryType}
+            onChange={(e) => setSelectedBinaryType(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '10px',
+              borderRadius: '8px',
+              border: `1px solid ${primaryColor}33`,
+              background: theme.cardBg,
+              color: theme.text,
+              outline: 'none',
+              fontSize: '14px'
+            }}
+          >
+            {binaryTypes.map(type => (
+              <option key={type.value} value={type.value}>{type.label}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Saved Versions Dropdown */}
+        {savedVersions.length > 0 && (
+          <div style={{ marginBottom: '16px', position: 'relative', zIndex: 1 }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '8px', 
+              color: theme.text, 
+              fontSize: '14px',
+              fontWeight: '500'
+            }}>
+              Saved Versions:
+            </label>
+            <select
+              onChange={handleVersionSelect}
+              style={{
+                width: '100%',
+                padding: '10px',
+                borderRadius: '8px',
+                border: `1px solid ${primaryColor}33`,
+                background: theme.cardBg,
+                color: theme.text,
+                outline: 'none',
+                fontSize: '14px',
+                maxHeight: '200px'
+              }}
+            >
+              <option value="">Select a saved version...</option>
+              {savedVersions.map((version, index) => (
+                <option key={index} value={`${version.hash} – ${version.description}`}>
+                  {version.hash} – {version.description}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Version Hash Input */}
+        <div style={{ marginBottom: '16px', position: 'relative', zIndex: 1 }}>
+          <label style={{ 
+            display: 'block', 
+            marginBottom: '8px', 
+            color: theme.text, 
+            fontSize: '14px',
+            fontWeight: '500'
+          }}>
+            Version Hash:
+          </label>
+          <input
+            type="text"
+            value={robloxVersion}
+            onChange={(e) => setRobloxVersion(e.target.value)}
+            placeholder="Enter Roblox version hash"
+            style={{
+              width: '100%',
+              padding: '10px',
+              borderRadius: '8px',
+              border: `1px solid ${primaryColor}33`,
+              background: theme.cardBg,
+              color: theme.text,
+              outline: 'none',
+              fontSize: '14px'
+            }}
+          />
+        </div>
 
         <motion.button
           whileHover={{ scale: 1.02 }}
@@ -334,7 +458,9 @@ const Extra = () => {
                 background: theme.cardBg,
                 border: `1px solid ${primaryColor}22`,
                 position: 'relative',
-                zIndex: 1
+                zIndex: 1,
+                fontSize: '14px',
+                color: theme.text
               }}
             >
               {status}
