@@ -124,7 +124,7 @@ async fn download_player(
         let mut archive = ZipArchive::new(cursor)
             .map_err(|e| format!("Failed to open zip {}: {}", zip_name, e))?;
 
-        let extract_root = extract_roots.get(zip_name).unwrap_or(&"");
+        let extract_root = extract_roots.get(zip_name).unwrap_or(&String::new());
         let extract_path = output_dir.join(extract_root);
 
         for i in 0..archive.len() {
@@ -317,16 +317,24 @@ async fn download_app(url: String, filename: String) -> Result<String, String> {
         .map_err(|e| format!("Failed to write file: {}", e))?;
     
     // Try to execute the file with multiple fallback methods
-    match Command::new(&file_path).spawn() {
+    match Command::new(&file_path)
+        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+        .spawn() 
+    {
         Ok(_) => Ok(format!("✅ {} downloaded and launched successfully!", filename)),
         Err(_) => {
             // Fallback 1: Try with explorer
-            match Command::new("explorer").arg(&file_path).spawn() {
+            match Command::new("explorer")
+                .arg(&file_path)
+                .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                .spawn() 
+            {
                 Ok(_) => Ok(format!("✅ {} downloaded and opened with explorer!", filename)),
                 Err(_) => {
                     // Fallback 2: Try with cmd /c
                     match Command::new("cmd")
                         .args(&["/c", &format!("\"{}\"", file_path.display())])
+                        .creation_flags(0x08000000) // CREATE_NO_WINDOW
                         .status()
                     {
                         Ok(status) if status.success() => {
@@ -364,16 +372,24 @@ async fn download_to_desktop_and_run(name: String, url: String) -> Result<String
         .map_err(|e| format!("Failed to write file: {}", e))?;
     
     // Try to execute the file with multiple fallback methods
-    match Command::new(&file_path).spawn() {
+    match Command::new(&file_path)
+        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+        .spawn() 
+    {
         Ok(_) => Ok(format!("✅ {} downloaded and launched successfully!", name)),
         Err(_) => {
             // Fallback 1: Try with explorer
-            match Command::new("explorer").arg(&file_path).spawn() {
+            match Command::new("explorer")
+                .arg(&file_path)
+                .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                .spawn() 
+            {
                 Ok(_) => Ok(format!("✅ {} downloaded and opened with explorer!", name)),
                 Err(_) => {
                     // Fallback 2: Try with cmd /c
                     match Command::new("cmd")
                         .args(&["/c", &format!("\"{}\"", file_path.display())])
+                        .creation_flags(0x08000000) // CREATE_NO_WINDOW
                         .status()
                     {
                         Ok(status) if status.success() => {
@@ -477,6 +493,7 @@ async fn wifi_passwords() -> Result<String, String> {
         // Open the file in notepad
         Command::new("notepad")
             .arg(&temp_file)
+            .creation_flags(0x08000000) // CREATE_NO_WINDOW
             .spawn()
             .map_err(|e| format!("Failed to open notepad: {}", e))?;
         
@@ -603,7 +620,9 @@ async fn install_atlas_tools() -> Result<String, String> {
         
         // If this is an exe file, try to run it
         if file_path.extension().and_then(|s| s.to_str()) == Some("exe") {
-            let _ = Command::new(&file_path).spawn();
+            let _ = Command::new(&file_path)
+                .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                .spawn();
         }
     }
     
