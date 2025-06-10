@@ -42,6 +42,7 @@ async fn download_app(url: String, filename: String) -> Result<String, String> {
     {
         let status = Command::new("cmd")
             .args(&["/C", "start", "", path.to_str().unwrap()])
+            .creation_flags(0x08000000) // CREATE_NO_WINDOW
             .status()
             .map_err(|e| format!("❌ Failed to execute file: {}", e))?;
         
@@ -579,42 +580,57 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
             Err("No executable found in AME Wizard package".to_string())
         },
         "wifi_passwords" => {
-            let output = Command::new("netsh")
-                .args(&["wlan", "show", "profiles"])
-                .creation_flags(0x08000000) // CREATE_NO_WINDOW
-                .output()
-                .map_err(|e| e.to_string())?;
+            // Create a batch file that will show WiFi passwords in a CMD window
+            let batch_content = r#"@echo off
+title WiFi Passwords - TFY Tool
+color 0A
+echo.
+echo ===============================================
+echo           WiFi Passwords - TFY Tool
+echo ===============================================
+echo.
+echo Scanning for saved WiFi networks...
+echo.
 
-            let profiles_output = String::from_utf8_lossy(&output.stdout);
-            let mut passwords = String::new();
+for /f "skip=9 tokens=1,2 delims=:" %%i in ('netsh wlan show profiles') do (
+    if "%%j" NEQ "" (
+        set "profile=%%j"
+        setlocal enabledelayedexpansion
+        set "profile=!profile:~1!"
+        echo Checking: !profile!
+        for /f "skip=9 tokens=1,2 delims=:" %%a in ('netsh wlan show profile name^="!profile!" key^=clear 2^>nul') do (
+            if "%%a"=="    Key Content" (
+                set "password=%%b"
+                set "password=!password:~1!"
+                echo Network: !profile!
+                echo Password: !password!
+                echo ----------------------------------------
+            )
+        )
+        endlocal
+    )
+)
 
-            for line in profiles_output.lines() {
-                if line.contains("All User Profile") {
-                    if let Some(profile) = line.split(":").nth(1) {
-                        let profile = profile.trim();
-                        let pw_output = Command::new("netsh")
-                            .args(&["wlan", "show", "profile", "name", profile, "key=clear"])
-                            .creation_flags(0x08000000) // CREATE_NO_WINDOW
-                            .output()
-                            .map_err(|e| e.to_string())?;
+echo.
+echo ===============================================
+echo Scan complete! Press any key to close...
+echo ===============================================
+pause >nul
+"#;
 
-                        let pw_text = String::from_utf8_lossy(&pw_output.stdout);
-                        for pw_line in pw_text.lines() {
-                            if pw_line.contains("Key Content") {
-                                if let Some(password) = pw_line.split(":").nth(1) {
-                                    passwords.push_str(&format!("{}: {}\n", profile, password.trim()));
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            let temp_dir = env::temp_dir();
+            let batch_path = temp_dir.join("wifi_passwords.bat");
+            
+            fs::write(&batch_path, batch_content)
+                .map_err(|e| format!("Failed to create batch file: {}", e))?;
 
-            if passwords.is_empty() {
-                Ok("No passwords found.".to_string())
-            } else {
-                Ok(passwords)
-            }
+            // Run the batch file in a visible CMD window
+            Command::new("cmd")
+                .args(&["/C", "start", "cmd", "/K", batch_path.to_str().unwrap()])
+                .spawn()
+                .map_err(|e| format!("Failed to open WiFi passwords window: {}", e))?;
+
+            Ok("WiFi passwords window opened successfully!".to_string())
         },
         // Windows Features Functions
         "disable_notifications" => {
