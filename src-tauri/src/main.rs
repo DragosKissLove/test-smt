@@ -12,6 +12,10 @@ use std::{
     path::Path,
 };
 
+// Add this import for Windows-specific Command extensions
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
 use zip::ZipArchive;
 use reqwest;
 use std::io::Write;
@@ -181,213 +185,253 @@ async fn download_player(version_hash: String) -> Result<String, String> {
 
 #[tauri::command]
 fn get_cpu_info() -> Result<String, String> {
-    let output = Command::new("wmic")
-        .args(&["cpu", "get", "name,numberofcores", "/format:csv"])
-        .creation_flags(0x08000000) // CREATE_NO_WINDOW
-        .output()
-        .map_err(|e| format!("Failed to get CPU info: {}", e))?;
+    #[cfg(target_os = "windows")]
+    {
+        let output = Command::new("wmic")
+            .args(&["cpu", "get", "name,numberofcores", "/format:csv"])
+            .creation_flags(0x08000000) // CREATE_NO_WINDOW
+            .output()
+            .map_err(|e| format!("Failed to get CPU info: {}", e))?;
 
-    let output_str = String::from_utf8_lossy(&output.stdout);
-    let mut cpu_name = String::new();
-    let mut cores = String::new();
+        let output_str = String::from_utf8_lossy(&output.stdout);
+        let mut cpu_name = String::new();
+        let mut cores = String::new();
 
-    for line in output_str.lines() {
-        if line.contains(',') && !line.contains("Node") {
-            let parts: Vec<&str> = line.split(',').collect();
-            if parts.len() >= 3 {
-                let name = parts[1].trim();
-                let core_count = parts[2].trim();
-                
-                if !name.is_empty() && !core_count.is_empty() {
-                    cpu_name = name.to_string();
-                    cores = core_count.to_string();
-                    break;
-                }
-            }
-        }
-    }
-    
-    if !cpu_name.is_empty() && !cores.is_empty() {
-        Ok(format!("{} ({} cores)", cpu_name, cores))
-    } else {
-        Err("Could not determine CPU information".to_string())
-    }
-}
-
-#[tauri::command]
-fn get_ram_info() -> Result<String, String> {
-    // Get total RAM
-    let ram_output = Command::new("wmic")
-        .args(&["computersystem", "get", "TotalPhysicalMemory", "/format:csv"])
-        .creation_flags(0x08000000) // CREATE_NO_WINDOW
-        .output()
-        .map_err(|e| format!("Failed to get RAM info: {}", e))?;
-
-    let ram_str = String::from_utf8_lossy(&ram_output.stdout);
-    let mut total_ram_gb = 0;
-
-    for line in ram_str.lines() {
-        if line.contains(',') && !line.contains("Node") {
-            let parts: Vec<&str> = line.split(',').collect();
-            if parts.len() >= 2 {
-                if let Ok(ram_bytes) = parts[1].trim().parse::<u64>() {
-                    total_ram_gb = ram_bytes / (1024 * 1024 * 1024);
-                    break;
-                }
-            }
-        }
-    }
-
-    // Get RAM speed
-    let speed_output = Command::new("wmic")
-        .args(&["memorychip", "get", "speed", "/format:csv"])
-        .creation_flags(0x08000000) // CREATE_NO_WINDOW
-        .output()
-        .map_err(|e| format!("Failed to get RAM speed: {}", e))?;
-
-    let speed_str = String::from_utf8_lossy(&speed_output.stdout);
-    let mut ram_speed = 0;
-
-    for line in speed_str.lines() {
-        if line.contains(',') && !line.contains("Node") {
-            let parts: Vec<&str> = line.split(',').collect();
-            if parts.len() >= 2 {
-                if let Ok(speed) = parts[1].trim().parse::<u32>() {
-                    if speed > 0 {
-                        ram_speed = speed;
+        for line in output_str.lines() {
+            if line.contains(',') && !line.contains("Node") {
+                let parts: Vec<&str> = line.split(',').collect();
+                if parts.len() >= 3 {
+                    let name = parts[1].trim();
+                    let core_count = parts[2].trim();
+                    
+                    if !name.is_empty() && !core_count.is_empty() {
+                        cpu_name = name.to_string();
+                        cores = core_count.to_string();
                         break;
                     }
                 }
             }
         }
-    }
-
-    if total_ram_gb > 0 {
-        if ram_speed > 0 {
-            Ok(format!("{}GB DDR4-{}", total_ram_gb, ram_speed))
+        
+        if !cpu_name.is_empty() && !cores.is_empty() {
+            Ok(format!("{} ({} cores)", cpu_name, cores))
         } else {
-            Ok(format!("{}GB RAM", total_ram_gb))
+            Err("Could not determine CPU information".to_string())
         }
-    } else {
-        Err("Could not determine RAM information".to_string())
+    }
+    
+    #[cfg(not(target_os = "windows"))]
+    {
+        Err("CPU info only available on Windows".to_string())
+    }
+}
+
+#[tauri::command]
+fn get_ram_info() -> Result<String, String> {
+    #[cfg(target_os = "windows")]
+    {
+        // Get total RAM
+        let ram_output = Command::new("wmic")
+            .args(&["computersystem", "get", "TotalPhysicalMemory", "/format:csv"])
+            .creation_flags(0x08000000) // CREATE_NO_WINDOW
+            .output()
+            .map_err(|e| format!("Failed to get RAM info: {}", e))?;
+
+        let ram_str = String::from_utf8_lossy(&ram_output.stdout);
+        let mut total_ram_gb = 0;
+
+        for line in ram_str.lines() {
+            if line.contains(',') && !line.contains("Node") {
+                let parts: Vec<&str> = line.split(',').collect();
+                if parts.len() >= 2 {
+                    if let Ok(ram_bytes) = parts[1].trim().parse::<u64>() {
+                        total_ram_gb = ram_bytes / (1024 * 1024 * 1024);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Get RAM speed
+        let speed_output = Command::new("wmic")
+            .args(&["memorychip", "get", "speed", "/format:csv"])
+            .creation_flags(0x08000000) // CREATE_NO_WINDOW
+            .output()
+            .map_err(|e| format!("Failed to get RAM speed: {}", e))?;
+
+        let speed_str = String::from_utf8_lossy(&speed_output.stdout);
+        let mut ram_speed = 0;
+
+        for line in speed_str.lines() {
+            if line.contains(',') && !line.contains("Node") {
+                let parts: Vec<&str> = line.split(',').collect();
+                if parts.len() >= 2 {
+                    if let Ok(speed) = parts[1].trim().parse::<u32>() {
+                        if speed > 0 {
+                            ram_speed = speed;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        if total_ram_gb > 0 {
+            if ram_speed > 0 {
+                Ok(format!("{}GB DDR4-{}", total_ram_gb, ram_speed))
+            } else {
+                Ok(format!("{}GB RAM", total_ram_gb))
+            }
+        } else {
+            Err("Could not determine RAM information".to_string())
+        }
+    }
+    
+    #[cfg(not(target_os = "windows"))]
+    {
+        Err("RAM info only available on Windows".to_string())
     }
 }
 
 #[tauri::command]
 fn get_storage_info() -> Result<String, String> {
-    let output = Command::new("wmic")
-        .args(&["diskdrive", "get", "size,model,mediatype", "/format:csv"])
-        .creation_flags(0x08000000) // CREATE_NO_WINDOW
-        .output()
-        .map_err(|e| format!("Failed to get storage info: {}", e))?;
+    #[cfg(target_os = "windows")]
+    {
+        let output = Command::new("wmic")
+            .args(&["diskdrive", "get", "size,model,mediatype", "/format:csv"])
+            .creation_flags(0x08000000) // CREATE_NO_WINDOW
+            .output()
+            .map_err(|e| format!("Failed to get storage info: {}", e))?;
 
-    let output_str = String::from_utf8_lossy(&output.stdout);
-    let mut storage_devices = Vec::new();
+        let output_str = String::from_utf8_lossy(&output.stdout);
+        let mut storage_devices = Vec::new();
 
-    for line in output_str.lines() {
-        if line.contains(',') && !line.contains("Node") {
-            let parts: Vec<&str> = line.split(',').collect();
-            if parts.len() >= 4 {
-                let media_type = parts[1].trim();
-                let model = parts[2].trim();
-                if let Ok(size) = parts[3].trim().parse::<u64>() {
-                    let size_gb = size / (1024 * 1024 * 1024);
-                    if size_gb > 0 && !model.is_empty() {
-                        let drive_type = if media_type.contains("SSD") || 
-                                           model.to_lowercase().contains("ssd") || 
-                                           model.to_lowercase().contains("nvme") {
-                            "SSD"
-                        } else {
-                            "HDD"
-                        };
-                        storage_devices.push(format!("{}: {}GB", drive_type, size_gb));
+        for line in output_str.lines() {
+            if line.contains(',') && !line.contains("Node") {
+                let parts: Vec<&str> = line.split(',').collect();
+                if parts.len() >= 4 {
+                    let media_type = parts[1].trim();
+                    let model = parts[2].trim();
+                    if let Ok(size) = parts[3].trim().parse::<u64>() {
+                        let size_gb = size / (1024 * 1024 * 1024);
+                        if size_gb > 0 && !model.is_empty() {
+                            let drive_type = if media_type.contains("SSD") || 
+                                               model.to_lowercase().contains("ssd") || 
+                                               model.to_lowercase().contains("nvme") {
+                                "SSD"
+                            } else {
+                                "HDD"
+                            };
+                            storage_devices.push(format!("{}: {}GB", drive_type, size_gb));
+                        }
                     }
                 }
             }
         }
-    }
 
-    if storage_devices.is_empty() {
-        Ok("Storage: Unknown".to_string())
-    } else {
-        Ok(storage_devices.join(" • "))
+        if storage_devices.is_empty() {
+            Ok("Storage: Unknown".to_string())
+        } else {
+            Ok(storage_devices.join(" • "))
+        }
+    }
+    
+    #[cfg(not(target_os = "windows"))]
+    {
+        Err("Storage info only available on Windows".to_string())
     }
 }
 
 #[tauri::command]
 fn get_gpu_info() -> Result<String, String> {
-    let output = Command::new("wmic")
-        .args(&["path", "win32_VideoController", "get", "name,driverversion", "/format:csv"])
-        .creation_flags(0x08000000) // CREATE_NO_WINDOW
-        .output()
-        .map_err(|e| format!("Failed to get GPU info: {}", e))?;
+    #[cfg(target_os = "windows")]
+    {
+        let output = Command::new("wmic")
+            .args(&["path", "win32_VideoController", "get", "name,driverversion", "/format:csv"])
+            .creation_flags(0x08000000) // CREATE_NO_WINDOW
+            .output()
+            .map_err(|e| format!("Failed to get GPU info: {}", e))?;
 
-    let output_str = String::from_utf8_lossy(&output.stdout);
-    
-    for line in output_str.lines() {
-        if line.contains(',') && !line.contains("Node") {
-            let parts: Vec<&str> = line.split(',').collect();
-            if parts.len() >= 3 {
-                let driver_version = parts[1].trim();
-                let name = parts[2].trim();
-                
-                // Skip Microsoft Basic Display Adapter and other generic adapters
-                if !name.is_empty() && 
-                   !name.contains("Microsoft Basic Display") && 
-                   !name.contains("Remote Desktop") &&
-                   (name.contains("NVIDIA") || name.contains("AMD") || name.contains("Intel") || name.contains("Radeon") || name.contains("GeForce")) {
-                    if !driver_version.is_empty() {
-                        return Ok(format!("{} (Driver: {})", name, driver_version));
-                    } else {
-                        return Ok(name.to_string());
+        let output_str = String::from_utf8_lossy(&output.stdout);
+        
+        for line in output_str.lines() {
+            if line.contains(',') && !line.contains("Node") {
+                let parts: Vec<&str> = line.split(',').collect();
+                if parts.len() >= 3 {
+                    let driver_version = parts[1].trim();
+                    let name = parts[2].trim();
+                    
+                    // Skip Microsoft Basic Display Adapter and other generic adapters
+                    if !name.is_empty() && 
+                       !name.contains("Microsoft Basic Display") && 
+                       !name.contains("Remote Desktop") &&
+                       (name.contains("NVIDIA") || name.contains("AMD") || name.contains("Intel") || name.contains("Radeon") || name.contains("GeForce")) {
+                        if !driver_version.is_empty() {
+                            return Ok(format!("{} (Driver: {})", name, driver_version));
+                        } else {
+                            return Ok(name.to_string());
+                        }
                     }
                 }
             }
         }
+        
+        Err("Could not determine GPU info".to_string())
     }
     
-    Err("Could not determine GPU info".to_string())
+    #[cfg(not(target_os = "windows"))]
+    {
+        Err("GPU info only available on Windows".to_string())
+    }
 }
 
 #[tauri::command]
 fn get_os_info() -> Result<String, String> {
-    let output = Command::new("wmic")
-        .args(&["os", "get", "caption,version,buildnumber", "/format:csv"])
-        .creation_flags(0x08000000) // CREATE_NO_WINDOW
-        .output()
-        .map_err(|e| format!("Failed to get OS info: {}", e))?;
+    #[cfg(target_os = "windows")]
+    {
+        let output = Command::new("wmic")
+            .args(&["os", "get", "caption,version,buildnumber", "/format:csv"])
+            .creation_flags(0x08000000) // CREATE_NO_WINDOW
+            .output()
+            .map_err(|e| format!("Failed to get OS info: {}", e))?;
 
-    let output_str = String::from_utf8_lossy(&output.stdout);
-    
-    for line in output_str.lines() {
-        if line.contains(',') && !line.contains("Node") {
-            let parts: Vec<&str> = line.split(',').collect();
-            if parts.len() >= 4 {
-                let build_number = parts[1].trim();
-                let caption = parts[2].trim();
-                let version = parts[3].trim();
-                
-                if !caption.is_empty() && !build_number.is_empty() {
-                    // Determine Windows version based on build number
-                    let windows_version = if let Ok(build) = build_number.parse::<u32>() {
-                        if build >= 22000 {
-                            "Windows 11"
-                        } else if build >= 10240 {
-                            "Windows 10"
+        let output_str = String::from_utf8_lossy(&output.stdout);
+        
+        for line in output_str.lines() {
+            if line.contains(',') && !line.contains("Node") {
+                let parts: Vec<&str> = line.split(',').collect();
+                if parts.len() >= 4 {
+                    let build_number = parts[1].trim();
+                    let caption = parts[2].trim();
+                    let version = parts[3].trim();
+                    
+                    if !caption.is_empty() && !build_number.is_empty() {
+                        // Determine Windows version based on build number
+                        let windows_version = if let Ok(build) = build_number.parse::<u32>() {
+                            if build >= 22000 {
+                                "Windows 11"
+                            } else if build >= 10240 {
+                                "Windows 10"
+                            } else {
+                                caption
+                            }
                         } else {
                             caption
-                        }
-                    } else {
-                        caption
-                    };
-                    
-                    return Ok(format!("{} (Build {})", windows_version, build_number));
+                        };
+                        
+                        return Ok(format!("{} (Build {})", windows_version, build_number));
+                    }
                 }
             }
         }
+        
+        Err("Could not determine OS info".to_string())
     }
     
-    Err("Could not determine OS info".to_string())
+    #[cfg(not(target_os = "windows"))]
+    {
+        Err("OS info only available on Windows".to_string())
+    }
 }
 
 #[tauri::command]
@@ -485,36 +529,52 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
             let temp_file = env::temp_dir().join("rarreg.key");
             fs::write(&temp_file, &content).map_err(|e| format!("Failed to create temp file: {}", e))?;
 
-            let status = Command::new("powershell")
-                .args(&[
-                    "-Command",
-                    &format!(
-                        "Start-Process powershell -Verb RunAs -WindowStyle Hidden -Wait -ArgumentList \
-                        '-Command Copy-Item -Path \"{}\" -Destination \"{}/rarreg.key\" -Force'",
-                        temp_file.display(),
-                        winrar_path
-                    )
-                ])
-                .creation_flags(0x08000000) // CREATE_NO_WINDOW
-                .status()
-                .map_err(|e| format!("Failed to execute PowerShell command: {}", e))?;
+            #[cfg(target_os = "windows")]
+            {
+                let status = Command::new("powershell")
+                    .args(&[
+                        "-Command",
+                        &format!(
+                            "Start-Process powershell -Verb RunAs -WindowStyle Hidden -Wait -ArgumentList \
+                            '-Command Copy-Item -Path \"{}\" -Destination \"{}/rarreg.key\" -Force'",
+                            temp_file.display(),
+                            winrar_path
+                        )
+                    ])
+                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                    .status()
+                    .map_err(|e| format!("Failed to execute PowerShell command: {}", e))?;
 
-            let _ = fs::remove_file(temp_file);
+                let _ = fs::remove_file(temp_file);
 
-            if status.success() {
-                Ok(format!("WinRAR crack successfully applied to {}", winrar_path))
-            } else {
-                Err("Failed to apply WinRAR crack. Please run the application as administrator.".to_string())
+                if status.success() {
+                    Ok(format!("WinRAR crack successfully applied to {}", winrar_path))
+                } else {
+                    Err("Failed to apply WinRAR crack. Please run the application as administrator.".to_string())
+                }
+            }
+            
+            #[cfg(not(target_os = "windows"))]
+            {
+                Err("WinRAR crack only available on Windows".to_string())
             }
         },
         "clean_temp" => {
-            Command::new("cmd")
-                .args(&["/C", "del /s /f /q %temp%\\* && del /s /f /q C:\\Windows\\Temp\\*"])
-                .creation_flags(0x08000000) // CREATE_NO_WINDOW
-                .output()
-                .map_err(|e| e.to_string())?;
+            #[cfg(target_os = "windows")]
+            {
+                Command::new("cmd")
+                    .args(&["/C", "del /s /f /q %temp%\\* && del /s /f /q C:\\Windows\\Temp\\*"])
+                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                    .output()
+                    .map_err(|e| e.to_string())?;
+                
+                Ok("Temporary files cleaned successfully!".to_string())
+            }
             
-            Ok("Temporary files cleaned successfully!".to_string())
+            #[cfg(not(target_os = "windows"))]
+            {
+                Err("Temp cleaning only available on Windows".to_string())
+            }
         },
         "run_optimization" => {
             let url = "https://raw.githubusercontent.com/DragosKissLove/testbot/main/TFY%20Optimization.bat";
@@ -524,22 +584,33 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
             let temp_path = env::temp_dir().join("TFY_Optimization.bat");
             fs::write(&temp_path, content).map_err(|e| e.to_string())?;
             
-            Command::new("powershell")
-                .args(&["-Command", &format!("Start-Process '{}' -Verb RunAs", temp_path.display())])
-                .creation_flags(0x08000000) // CREATE_NO_WINDOW
-                .spawn()
-                .map_err(|e| e.to_string())?;
+            #[cfg(target_os = "windows")]
+            {
+                Command::new("powershell")
+                    .args(&["-Command", &format!("Start-Process '{}' -Verb RunAs", temp_path.display())])
+                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                    .spawn()
+                    .map_err(|e| e.to_string())?;
+            }
             
             Ok("Optimization process started.".to_string())
         },
         "activate_windows" => {
-            Command::new("powershell")
-                .args(&["-Command", "irm https://get.activated.win | iex"])
-                .creation_flags(0x08000000) // CREATE_NO_WINDOW
-                .spawn()
-                .map_err(|e| e.to_string())?;
+            #[cfg(target_os = "windows")]
+            {
+                Command::new("powershell")
+                    .args(&["-Command", "irm https://get.activated.win | iex"])
+                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                    .spawn()
+                    .map_err(|e| e.to_string())?;
+                
+                Ok("Windows activation started.".to_string())
+            }
             
-            Ok("Windows activation started.".to_string())
+            #[cfg(not(target_os = "windows"))]
+            {
+                Err("Windows activation only available on Windows".to_string())
+            }
         },
         "install_atlas_tools" => {
             let download_folder = dirs::download_dir()
@@ -564,15 +635,18 @@ async fn run_function(name: String, _args: Option<String>) -> Result<String, Str
             let file = File::open(&ame_zip).map_err(|e| e.to_string())?;
             let mut archive = zip::ZipArchive::new(file).map_err(|e| e.to_string())?;
             archive.extract(&ame_extract).map_err(|e| e.to_string())?;
-
+            
             for entry in fs::read_dir(&ame_extract).map_err(|e| e.to_string())? {
                 let entry = entry.map_err(|e| e.to_string())?;
                 let path = entry.path();
                 if path.extension().and_then(|s| s.to_str()) == Some("exe") {
-                    Command::new(&path)
-                        .creation_flags(0x08000000) // CREATE_NO_WINDOW
-                        .spawn()
-                        .map_err(|e| e.to_string())?;
+                    #[cfg(target_os = "windows")]
+                    {
+                        Command::new(&path)
+                            .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                            .spawn()
+                            .map_err(|e| e.to_string())?;
+                    }
                     return Ok("Atlas tools installed successfully".to_string());
                 }
             }
@@ -625,52 +699,71 @@ pause >nul
                 .map_err(|e| format!("Failed to create batch file: {}", e))?;
 
             // Run the batch file in a visible CMD window
-            Command::new("cmd")
-                .args(&["/C", "start", "cmd", "/K", batch_path.to_str().unwrap()])
-                .spawn()
-                .map_err(|e| format!("Failed to open WiFi passwords window: {}", e))?;
+            #[cfg(target_os = "windows")]
+            {
+                Command::new("cmd")
+                    .args(&["/C", "start", "cmd", "/K", batch_path.to_str().unwrap()])
+                    .spawn()
+                    .map_err(|e| format!("Failed to open WiFi passwords window: {}", e))?;
+            }
 
             Ok("WiFi passwords window opened successfully!".to_string())
         },
         // Windows Features Functions
         "disable_notifications" => {
-            let commands = vec![
-                "sc stop WpnService",
-                "reg add \"HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\CapabilityAccessManager\\ConsentStore\\userNotificationListener\" /v \"Value\" /t REG_SZ /d \"Deny\" /f",
-                "reg add \"HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Notifications\\Settings\" /v \"NOC_GLOBAL_SETTING_ALLOW_NOTIFICATION_SOUND\" /t REG_DWORD /d \"0\" /f",
-                "reg add \"HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PushNotifications\" /v \"ToastEnabled\" /t REG_DWORD /d \"0\" /f",
-                "reg add \"HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\CurrentVersion\\PushNotifications\" /v \"NoCloudApplicationNotification\" /t REG_DWORD /d \"1\" /f"
-            ];
+            #[cfg(target_os = "windows")]
+            {
+                let commands = vec![
+                    "sc stop WpnService",
+                    "reg add \"HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\CapabilityAccessManager\\ConsentStore\\userNotificationListener\" /v \"Value\" /t REG_SZ /d \"Deny\" /f",
+                    "reg add \"HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Notifications\\Settings\" /v \"NOC_GLOBAL_SETTING_ALLOW_NOTIFICATION_SOUND\" /t REG_DWORD /d \"0\" /f",
+                    "reg add \"HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PushNotifications\" /v \"ToastEnabled\" /t REG_DWORD /d \"0\" /f",
+                    "reg add \"HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\CurrentVersion\\PushNotifications\" /v \"NoCloudApplicationNotification\" /t REG_DWORD /d \"1\" /f"
+                ];
 
-            for cmd in commands {
-                Command::new("cmd")
-                    .args(&["/C", cmd])
-                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
-                    .output()
-                    .map_err(|e| e.to_string())?;
+                for cmd in commands {
+                    Command::new("cmd")
+                        .args(&["/C", cmd])
+                        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                        .output()
+                        .map_err(|e| e.to_string())?;
+                }
+
+                Ok("Notifications disabled successfully".to_string())
             }
-
-            Ok("Notifications disabled successfully".to_string())
+            
+            #[cfg(not(target_os = "windows"))]
+            {
+                Err("Notifications control only available on Windows".to_string())
+            }
         },
         "enable_notifications" => {
-            let commands = vec![
-                "sc start WpnService",
-                "reg add \"HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\CapabilityAccessManager\\ConsentStore\\userNotificationListener\" /v \"Value\" /t REG_SZ /d \"Allow\" /f",
-                "reg add \"HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Notifications\\Settings\" /v \"NOC_GLOBAL_SETTING_ALLOW_NOTIFICATION_SOUND\" /t REG_DWORD /d \"1\" /f",
-                "reg add \"HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PushNotifications\" /v \"ToastEnabled\" /t REG_DWORD /d \"1\" /f",
-                "reg delete \"HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\CurrentVersion\\PushNotifications\" /v \"NoCloudApplicationNotification\" /f",
-                "reg delete \"HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Explorer\" /v \"DisableNotificationCenter\" /f"
-            ];
+            #[cfg(target_os = "windows")]
+            {
+                let commands = vec![
+                    "sc start WpnService",
+                    "reg add \"HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\CapabilityAccessManager\\ConsentStore\\userNotificationListener\" /v \"Value\" /t REG_SZ /d \"Allow\" /f",
+                    "reg add \"HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Notifications\\Settings\" /v \"NOC_GLOBAL_SETTING_ALLOW_NOTIFICATION_SOUND\" /t REG_DWORD /d \"1\" /f",
+                    "reg add \"HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PushNotifications\" /v \"ToastEnabled\" /t REG_DWORD /d \"1\" /f",
+                    "reg delete \"HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\CurrentVersion\\PushNotifications\" /v \"NoCloudApplicationNotification\" /f",
+                    "reg delete \"HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Explorer\" /v \"DisableNotificationCenter\" /f"
+                ];
 
-            for cmd in commands {
-                Command::new("cmd")
-                    .args(&["/C", cmd])
-                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
-                    .output()
-                    .ok();
+                for cmd in commands {
+                    Command::new("cmd")
+                        .args(&["/C", cmd])
+                        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                        .output()
+                        .ok();
+                }
+
+                Ok("Notifications enabled successfully".to_string())
             }
-
-            Ok("Notifications enabled successfully".to_string())
+            
+            #[cfg(not(target_os = "windows"))]
+            {
+                Err("Notifications control only available on Windows".to_string())
+            }
         },
         "disable_fso_gamebar" => {
             let reg_content = r#"
@@ -698,11 +791,14 @@ pause >nul
             let temp_file = env::temp_dir().join("disable_fso_gamebar.reg");
             fs::write(&temp_file, reg_content).map_err(|e| e.to_string())?;
             
-            Command::new("reg")
-                .args(&["import", temp_file.to_str().unwrap()])
-                .creation_flags(0x08000000) // CREATE_NO_WINDOW
-                .output()
-                .map_err(|e| e.to_string())?;
+            #[cfg(target_os = "windows")]
+            {
+                Command::new("reg")
+                    .args(&["import", temp_file.to_str().unwrap()])
+                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                    .output()
+                    .map_err(|e| e.to_string())?;
+            }
 
             fs::remove_file(temp_file).ok();
             Ok("FSO & Game Bar disabled successfully".to_string())
@@ -733,169 +829,220 @@ pause >nul
             let temp_file = env::temp_dir().join("enable_fso_gamebar.reg");
             fs::write(&temp_file, reg_content).map_err(|e| e.to_string())?;
             
-            Command::new("reg")
-                .args(&["import", temp_file.to_str().unwrap()])
-                .creation_flags(0x08000000) // CREATE_NO_WINDOW
-                .output()
-                .map_err(|e| e.to_string())?;
+            #[cfg(target_os = "windows")]
+            {
+                Command::new("reg")
+                    .args(&["import", temp_file.to_str().unwrap()])
+                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                    .output()
+                    .map_err(|e| e.to_string())?;
+            }
 
             fs::remove_file(temp_file).ok();
             Ok("FSO & Game Bar enabled successfully".to_string())
         },
         "disable_vpn" => {
-            let commands = vec![
-                "sc config Eaphost start= disabled",
-                "sc config IKEEXT start= disabled", 
-                "sc config iphlpsvc start= disabled",
-                "sc config NdisVirtualBus start= disabled",
-                "sc config RasMan start= disabled",
-                "sc config SstpSvc start= disabled",
-                "sc config WinHttpAutoProxySvc start= disabled",
-                "sc stop Eaphost",
-                "sc stop IKEEXT",
-                "sc stop iphlpsvc", 
-                "sc stop NdisVirtualBus",
-                "sc stop RasMan",
-                "sc stop SstpSvc",
-                "sc stop WinHttpAutoProxySvc"
-            ];
+            #[cfg(target_os = "windows")]
+            {
+                let commands = vec![
+                    "sc config Eaphost start= disabled",
+                    "sc config IKEEXT start= disabled", 
+                    "sc config iphlpsvc start= disabled",
+                    "sc config NdisVirtualBus start= disabled",
+                    "sc config RasMan start= disabled",
+                    "sc config SstpSvc start= disabled",
+                    "sc config WinHttpAutoProxySvc start= disabled",
+                    "sc stop Eaphost",
+                    "sc stop IKEEXT",
+                    "sc stop iphlpsvc", 
+                    "sc stop NdisVirtualBus",
+                    "sc stop RasMan",
+                    "sc stop SstpSvc",
+                    "sc stop WinHttpAutoProxySvc"
+                ];
 
-            for cmd in commands {
-                Command::new("cmd")
-                    .args(&["/C", cmd])
-                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
-                    .output()
-                    .ok();
+                for cmd in commands {
+                    Command::new("cmd")
+                        .args(&["/C", cmd])
+                        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                        .output()
+                        .ok();
+                }
+
+                Ok("VPN services disabled successfully".to_string())
             }
-
-            Ok("VPN services disabled successfully".to_string())
+            
+            #[cfg(not(target_os = "windows"))]
+            {
+                Err("VPN control only available on Windows".to_string())
+            }
         },
         "enable_vpn" => {
-            let commands = vec![
-                "sc config BFE start= auto",
-                "sc config Eaphost start= demand",
-                "sc config IKEEXT start= demand",
-                "sc config iphlpsvc start= demand",
-                "sc config NdisVirtualBus start= demand",
-                "sc config RasMan start= auto",
-                "sc config SstpSvc start= demand",
-                "sc config WinHttpAutoProxySvc start= demand",
-                "sc start BFE",
-                "sc start RasMan"
-            ];
+            #[cfg(target_os = "windows")]
+            {
+                let commands = vec![
+                    "sc config BFE start= auto",
+                    "sc config Eaphost start= demand",
+                    "sc config IKEEXT start= demand",
+                    "sc config iphlpsvc start= demand",
+                    "sc config NdisVirtualBus start= demand",
+                    "sc config RasMan start= auto",
+                    "sc config SstpSvc start= demand",
+                    "sc config WinHttpAutoProxySvc start= demand",
+                    "sc start BFE",
+                    "sc start RasMan"
+                ];
 
-            for cmd in commands {
-                Command::new("cmd")
-                    .args(&["/C", cmd])
-                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
-                    .output()
-                    .ok();
+                for cmd in commands {
+                    Command::new("cmd")
+                        .args(&["/C", cmd])
+                        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                        .output()
+                        .ok();
+                }
+
+                Ok("VPN services enabled successfully".to_string())
             }
-
-            Ok("VPN services enabled successfully".to_string())
+            
+            #[cfg(not(target_os = "windows"))]
+            {
+                Err("VPN control only available on Windows".to_string())
+            }
         },
         "disable_printing" => {
-            let commands = vec![
-                "sc config Spooler start= disabled",
-                "sc config PrintWorkFlowUserSvc start= disabled",
-                "sc stop Spooler",
-                "sc stop PrintWorkFlowUserSvc",
-                "DISM /Online /Disable-Feature /FeatureName:\"Printing-Foundation-Features\" /NoRestart",
-                "DISM /Online /Disable-Feature /FeatureName:\"Printing-Foundation-InternetPrinting-Client\" /NoRestart",
-                "DISM /Online /Disable-Feature /FeatureName:\"Printing-XPSServices-Features\" /NoRestart",
-                "DISM /Online /Disable-Feature /FeatureName:\"Printing-PrintToPDFServices-Features\" /NoRestart"
-            ];
+            #[cfg(target_os = "windows")]
+            {
+                let commands = vec![
+                    "sc config Spooler start= disabled",
+                    "sc config PrintWorkFlowUserSvc start= disabled",
+                    "sc stop Spooler",
+                    "sc stop PrintWorkFlowUserSvc",
+                    "DISM /Online /Disable-Feature /FeatureName:\"Printing-Foundation-Features\" /NoRestart",
+                    "DISM /Online /Disable-Feature /FeatureName:\"Printing-Foundation-InternetPrinting-Client\" /NoRestart",
+                    "DISM /Online /Disable-Feature /FeatureName:\"Printing-XPSServices-Features\" /NoRestart",
+                    "DISM /Online /Disable-Feature /FeatureName:\"Printing-PrintToPDFServices-Features\" /NoRestart"
+                ];
 
-            for cmd in commands {
-                Command::new("cmd")
-                    .args(&["/C", cmd])
-                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
-                    .output()
-                    .ok();
+                for cmd in commands {
+                    Command::new("cmd")
+                        .args(&["/C", cmd])
+                        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                        .output()
+                        .ok();
+                }
+
+                Ok("Printing services disabled successfully".to_string())
             }
-
-            Ok("Printing services disabled successfully".to_string())
+            
+            #[cfg(not(target_os = "windows"))]
+            {
+                Err("Printing control only available on Windows".to_string())
+            }
         },
         "enable_printing" => {
-            let commands = vec![
-                "sc config Spooler start= auto",
-                "sc config PrintWorkFlowUserSvc start= demand",
-                "sc start Spooler",
-                "DISM /Online /Enable-Feature /FeatureName:\"Printing-Foundation-Features\" /NoRestart",
-                "DISM /Online /Enable-Feature /FeatureName:\"Printing-Foundation-InternetPrinting-Client\" /NoRestart",
-                "DISM /Online /Enable-Feature /FeatureName:\"Printing-XPSServices-Features\" /NoRestart",
-                "DISM /Online /Enable-Feature /FeatureName:\"Printing-PrintToPDFServices-Features\" /NoRestart"
-            ];
+            #[cfg(target_os = "windows")]
+            {
+                let commands = vec![
+                    "sc config Spooler start= auto",
+                    "sc config PrintWorkFlowUserSvc start= demand",
+                    "sc start Spooler",
+                    "DISM /Online /Enable-Feature /FeatureName:\"Printing-Foundation-Features\" /NoRestart",
+                    "DISM /Online /Enable-Feature /FeatureName:\"Printing-Foundation-InternetPrinting-Client\" /NoRestart",
+                    "DISM /Online /Enable-Feature /FeatureName:\"Printing-XPSServices-Features\" /NoRestart",
+                    "DISM /Online /Enable-Feature /FeatureName:\"Printing-PrintToPDFServices-Features\" /NoRestart"
+                ];
 
-            for cmd in commands {
-                Command::new("cmd")
-                    .args(&["/C", cmd])
-                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
-                    .output()
-                    .ok();
+                for cmd in commands {
+                    Command::new("cmd")
+                        .args(&["/C", cmd])
+                        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                        .output()
+                        .ok();
+                }
+
+                Ok("Printing services enabled successfully".to_string())
             }
-
-            Ok("Printing services enabled successfully".to_string())
+            
+            #[cfg(not(target_os = "windows"))]
+            {
+                Err("Printing control only available on Windows".to_string())
+            }
         },
         "disable_bluetooth" => {
-            let commands = vec![
-                "sc config BluetoothUserService start= disabled",
-                "sc config BTAGService start= disabled",
-                "sc config BthA2dp start= disabled",
-                "sc config BthAvctpSvc start= disabled",
-                "sc config BthEnum start= disabled",
-                "sc config BthHFEnum start= disabled",
-                "sc config BthLEEnum start= disabled",
-                "sc config BthMini start= disabled",
-                "sc config BTHMODEM start= disabled",
-                "sc config BTHPORT start= disabled",
-                "sc config bthserv start= disabled",
-                "sc config BTHUSB start= disabled",
-                "sc config HidBth start= disabled",
-                "sc config Microsoft_Bluetooth_AvrcpTransport start= disabled",
-                "sc config RFCOMM start= disabled",
-                "reg add \"HKLM\\SOFTWARE\\Microsoft\\PolicyManager\\default\\Connectivity\\AllowBluetooth\" /v \"value\" /t REG_DWORD /d \"0\" /f"
-            ];
+            #[cfg(target_os = "windows")]
+            {
+                let commands = vec![
+                    "sc config BluetoothUserService start= disabled",
+                    "sc config BTAGService start= disabled",
+                    "sc config BthA2dp start= disabled",
+                    "sc config BthAvctpSvc start= disabled",
+                    "sc config BthEnum start= disabled",
+                    "sc config BthHFEnum start= disabled",
+                    "sc config BthLEEnum start= disabled",
+                    "sc config BthMini start= disabled",
+                    "sc config BTHMODEM start= disabled",
+                    "sc config BTHPORT start= disabled",
+                    "sc config bthserv start= disabled",
+                    "sc config BTHUSB start= disabled",
+                    "sc config HidBth start= disabled",
+                    "sc config Microsoft_Bluetooth_AvrcpTransport start= disabled",
+                    "sc config RFCOMM start= disabled",
+                    "reg add \"HKLM\\SOFTWARE\\Microsoft\\PolicyManager\\default\\Connectivity\\AllowBluetooth\" /v \"value\" /t REG_DWORD /d \"0\" /f"
+                ];
 
-            for cmd in commands {
-                Command::new("cmd")
-                    .args(&["/C", cmd])
-                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
-                    .output()
-                    .ok();
+                for cmd in commands {
+                    Command::new("cmd")
+                        .args(&["/C", cmd])
+                        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                        .output()
+                        .ok();
+                }
+
+                Ok("Bluetooth disabled successfully".to_string())
             }
-
-            Ok("Bluetooth disabled successfully".to_string())
+            
+            #[cfg(not(target_os = "windows"))]
+            {
+                Err("Bluetooth control only available on Windows".to_string())
+            }
         },
         "enable_bluetooth" => {
-            let commands = vec![
-                "sc config BluetoothUserService start= demand",
-                "sc config BTAGService start= demand",
-                "sc config BthA2dp start= demand",
-                "sc config BthAvctpSvc start= demand",
-                "sc config BthEnum start= demand",
-                "sc config BthHFEnum start= demand",
-                "sc config BthLEEnum start= demand",
-                "sc config BthMini start= demand",
-                "sc config BTHMODEM start= demand",
-                "sc config BTHPORT start= demand",
-                "sc config bthserv start= demand",
-                "sc config BTHUSB start= demand",
-                "sc config HidBth start= demand",
-                "sc config Microsoft_Bluetooth_AvrcpTransport start= demand",
-                "sc config RFCOMM start= demand",
-                "reg add \"HKLM\\SOFTWARE\\Microsoft\\PolicyManager\\default\\Connectivity\\AllowBluetooth\" /v \"value\" /t REG_DWORD /d \"2\" /f"
-            ];
+            #[cfg(target_os = "windows")]
+            {
+                let commands = vec![
+                    "sc config BluetoothUserService start= demand",
+                    "sc config BTAGService start= demand",
+                    "sc config BthA2dp start= demand",
+                    "sc config BthAvctpSvc start= demand",
+                    "sc config BthEnum start= demand",
+                    "sc config BthHFEnum start= demand",
+                    "sc config BthLEEnum start= demand",
+                    "sc config BthMini start= demand",
+                    "sc config BTHMODEM start= demand",
+                    "sc config BTHPORT start= demand",
+                    "sc config bthserv start= demand",
+                    "sc config BTHUSB start= demand",
+                    "sc config HidBth start= demand",
+                    "sc config Microsoft_Bluetooth_AvrcpTransport start= demand",
+                    "sc config RFCOMM start= demand",
+                    "reg add \"HKLM\\SOFTWARE\\Microsoft\\PolicyManager\\default\\Connectivity\\AllowBluetooth\" /v \"value\" /t REG_DWORD /d \"2\" /f"
+                ];
 
-            for cmd in commands {
-                Command::new("cmd")
-                    .args(&["/C", cmd])
-                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
-                    .output()
-                    .ok();
+                for cmd in commands {
+                    Command::new("cmd")
+                        .args(&["/C", cmd])
+                        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                        .output()
+                        .ok();
+                }
+
+                Ok("Bluetooth enabled successfully".to_string())
             }
-
-            Ok("Bluetooth enabled successfully".to_string())
+            
+            #[cfg(not(target_os = "windows"))]
+            {
+                Err("Bluetooth control only available on Windows".to_string())
+            }
         },
         "disable_game_mode" => {
             let reg_content = r#"
@@ -907,30 +1054,41 @@ pause >nul
             let temp_file = env::temp_dir().join("disable_game_mode.reg");
             fs::write(&temp_file, reg_content).map_err(|e| e.to_string())?;
             
-            Command::new("reg")
-                .args(&["import", temp_file.to_str().unwrap()])
-                .creation_flags(0x08000000) // CREATE_NO_WINDOW
-                .output()
-                .map_err(|e| e.to_string())?;
+            #[cfg(target_os = "windows")]
+            {
+                Command::new("reg")
+                    .args(&["import", temp_file.to_str().unwrap()])
+                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                    .output()
+                    .map_err(|e| e.to_string())?;
+            }
 
             fs::remove_file(temp_file).ok();
             Ok("Game mode disabled successfully".to_string())
         },
         "enable_game_mode" => {
-            let commands = vec![
-                "reg delete \"HKCU\\SOFTWARE\\Microsoft\\GameBar\" /v \"AllowAutoGameMode\" /f",
-                "reg delete \"HKCU\\SOFTWARE\\Microsoft\\GameBar\" /v \"AutoGameModeEnabled\" /f"
-            ];
+            #[cfg(target_os = "windows")]
+            {
+                let commands = vec![
+                    "reg delete \"HKCU\\SOFTWARE\\Microsoft\\GameBar\" /v \"AllowAutoGameMode\" /f",
+                    "reg delete \"HKCU\\SOFTWARE\\Microsoft\\GameBar\" /v \"AutoGameModeEnabled\" /f"
+                ];
 
-            for cmd in commands {
-                Command::new("cmd")
-                    .args(&["/C", cmd])
-                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
-                    .output()
-                    .ok();
+                for cmd in commands {
+                    Command::new("cmd")
+                        .args(&["/C", cmd])
+                        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                        .output()
+                        .ok();
+                }
+
+                Ok("Game mode enabled successfully".to_string())
             }
-
-            Ok("Game mode enabled successfully".to_string())
+            
+            #[cfg(not(target_os = "windows"))]
+            {
+                Err("Game mode control only available on Windows".to_string())
+            }
         },
         "disable_background_apps" => {
             let reg_content = r#"
@@ -944,62 +1102,89 @@ pause >nul
             let temp_file = env::temp_dir().join("disable_background_apps.reg");
             fs::write(&temp_file, reg_content).map_err(|e| e.to_string())?;
             
-            Command::new("reg")
-                .args(&["import", temp_file.to_str().unwrap()])
-                .creation_flags(0x08000000) // CREATE_NO_WINDOW
-                .output()
-                .map_err(|e| e.to_string())?;
+            #[cfg(target_os = "windows")]
+            {
+                Command::new("reg")
+                    .args(&["import", temp_file.to_str().unwrap()])
+                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                    .output()
+                    .map_err(|e| e.to_string())?;
+            }
 
             fs::remove_file(temp_file).ok();
             Ok("Background apps disabled successfully".to_string())
         },
         "enable_background_apps" => {
-            let commands = vec![
-                "reg delete \"HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\BackgroundAccessApplications\" /v \"GlobalUserDisabled\" /f",
-                "reg delete \"HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Search\" /v \"BackgroundAppGlobalToggle\" /f"
-            ];
+            #[cfg(target_os = "windows")]
+            {
+                let commands = vec![
+                    "reg delete \"HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\BackgroundAccessApplications\" /v \"GlobalUserDisabled\" /f",
+                    "reg delete \"HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Search\" /v \"BackgroundAppGlobalToggle\" /f"
+                ];
 
-            for cmd in commands {
-                Command::new("cmd")
-                    .args(&["/C", cmd])
-                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
-                    .output()
-                    .ok();
+                for cmd in commands {
+                    Command::new("cmd")
+                        .args(&["/C", cmd])
+                        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                        .output()
+                        .ok();
+                }
+
+                Ok("Background apps enabled successfully".to_string())
             }
-
-            Ok("Background apps enabled successfully".to_string())
+            
+            #[cfg(not(target_os = "windows"))]
+            {
+                Err("Background apps control only available on Windows".to_string())
+            }
         },
         "disable_search_indexing" => {
-            let commands = vec![
-                "sc config WSearch start= disabled",
-                "sc stop WSearch"
-            ];
+            #[cfg(target_os = "windows")]
+            {
+                let commands = vec![
+                    "sc config WSearch start= disabled",
+                    "sc stop WSearch"
+                ];
 
-            for cmd in commands {
-                Command::new("cmd")
-                    .args(&["/C", cmd])
-                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
-                    .output()
-                    .ok();
+                for cmd in commands {
+                    Command::new("cmd")
+                        .args(&["/C", cmd])
+                        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                        .output()
+                        .ok();
+                }
+
+                Ok("Search indexing disabled successfully".to_string())
             }
-
-            Ok("Search indexing disabled successfully".to_string())
+            
+            #[cfg(not(target_os = "windows"))]
+            {
+                Err("Search indexing control only available on Windows".to_string())
+            }
         },
         "enable_search_indexing" => {
-            let commands = vec![
-                "sc config WSearch start= auto",
-                "sc start WSearch"
-            ];
+            #[cfg(target_os = "windows")]
+            {
+                let commands = vec![
+                    "sc config WSearch start= auto",
+                    "sc start WSearch"
+                ];
 
-            for cmd in commands {
-                Command::new("cmd")
-                    .args(&["/C", cmd])
-                    .creation_flags(0x08000000) // CREATE_NO_WINDOW
-                    .output()
-                    .ok();
+                for cmd in commands {
+                    Command::new("cmd")
+                        .args(&["/C", cmd])
+                        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                        .output()
+                        .ok();
+                }
+
+                Ok("Search indexing enabled successfully".to_string())
             }
-
-            Ok("Search indexing enabled successfully".to_string())
+            
+            #[cfg(not(target_os = "windows"))]
+            {
+                Err("Search indexing control only available on Windows".to_string())
+            }
         },
         // Placeholder functions for visual effects
         "disable_visual_effects" => Ok("Visual effects disabled successfully".to_string()),
