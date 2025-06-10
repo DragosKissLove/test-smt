@@ -124,7 +124,9 @@ async fn download_player(
         let mut archive = ZipArchive::new(cursor)
             .map_err(|e| format!("Failed to open zip {}: {}", zip_name, e))?;
 
-        let extract_root = extract_roots.get(zip_name).unwrap_or(&String::new());
+        // Fix the lifetime issue by using a default empty string
+        let default_root = String::new();
+        let extract_root = extract_roots.get(zip_name).unwrap_or(&default_root);
         let extract_path = output_dir.join(extract_root);
 
         for i in 0..archive.len() {
