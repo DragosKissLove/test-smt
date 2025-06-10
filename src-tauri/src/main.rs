@@ -19,7 +19,7 @@ use std::path::PathBuf;
 use std::process::Command;
 
 #[tauri::command]
-async fn download_app(url: String, filename: String) -> Result<(), String> {
+async fn download_app(url: String, filename: String) -> Result<String, String> {
     let response = reqwest::get(&url)
         .await
         .map_err(|e| format!("❌ Download error: {}", e))?;
@@ -37,9 +37,28 @@ async fn download_app(url: String, filename: String) -> Result<(), String> {
     file.write_all(&bytes).map_err(|e| format!("❌ Write failed: {}", e))?;
     file.flush().ok();
 
-    open::that(&path).map_err(|e| format!("❌ Failed to open file: {}", e))?;
+    // Use Windows-specific command to run the executable
+    #[cfg(target_os = "windows")]
+    {
+        let status = Command::new("cmd")
+            .args(&["/C", "start", "", path.to_str().unwrap()])
+            .status()
+            .map_err(|e| format!("❌ Failed to execute file: {}", e))?;
+        
+        if !status.success() {
+            return Err(format!("❌ Failed to launch installer (exit code: {})", status.code().unwrap_or(-1)));
+        }
+    }
 
-    Ok(())
+    #[cfg(not(target_os = "windows"))]
+    {
+        Command::new("open")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| format!("❌ Failed to open file: {}", e))?;
+    }
+
+    Ok(format!("✅ {} downloaded and launched successfully!", filename.replace(".exe", "")))
 }
 
 #[tauri::command]
@@ -857,10 +876,26 @@ fn download_to_desktop_and_run(name: String, url: String) -> Result<String, Stri
 
     std::fs::write(&file_path, &content).map_err(|e| format!("❌ Write failed: {}", e))?;
 
-    Command::new("explorer")
-        .arg(file_path.to_str().unwrap())
-        .spawn()
-        .map_err(|e| format!("❌ Failed to open file: {}", e))?;
+    // Use Windows-specific command to run the executable
+    #[cfg(target_os = "windows")]
+    {
+        let status = Command::new("cmd")
+            .args(&["/C", "start", "", file_path.to_str().unwrap()])
+            .status()
+            .map_err(|e| format!("❌ Failed to execute file: {}", e))?;
+        
+        if !status.success() {
+            return Err(format!("❌ Failed to launch installer (exit code: {})", status.code().unwrap_or(-1)));
+        }
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        Command::new("open")
+            .arg(&file_path)
+            .spawn()
+            .map_err(|e| format!("❌ Failed to open file: {}", e))?;
+    }
 
     Ok(format!("✅ {} downloaded and launched from Desktop!", name))
 }
