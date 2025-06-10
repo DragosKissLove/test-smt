@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../ThemeContext';
-import { FiDownload, FiRefreshCw, FiClock, FiSettings } from 'react-icons/fi';
+import { FiDownload, FiRefreshCw, FiClock } from 'react-icons/fi';
 import { invoke } from '@tauri-apps/api/tauri';
 import { showNotification } from '../components/NotificationSystem';
 import { ring } from 'ldrs';
@@ -16,16 +16,6 @@ const Extra = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [savedVersions, setSavedVersions] = useState([]);
   const [activeButton, setActiveButton] = useState(null);
-  const [selectedChannel, setSelectedChannel] = useState('LIVE');
-  const [selectedBinaryType, setSelectedBinaryType] = useState('WindowsPlayer');
-
-  const channels = ['LIVE', 'zcanary', 'zintegration'];
-  const binaryTypes = [
-    { value: 'WindowsPlayer', label: 'Windows Player' },
-    { value: 'WindowsStudio64', label: 'Windows Studio 64' },
-    { value: 'MacPlayer', label: 'Mac Player' },
-    { value: 'MacStudio', label: 'Mac Studio' }
-  ];
 
   useEffect(() => {
     // Load saved versions from the API
@@ -72,8 +62,8 @@ const Extra = () => {
 
       const result = await invoke('download_player', { 
         version_hash: robloxVersion,
-        channel: selectedChannel,
-        binary_type: selectedBinaryType
+        channel: 'LIVE',
+        binary_type: 'WindowsPlayer'
       });
       
       setStatus(result || '✅ Roblox downgrade completed successfully!');
@@ -164,69 +154,7 @@ const Extra = () => {
           filter: `drop-shadow(0 0 10px ${primaryColor}66)`,
           position: 'relative',
           zIndex: 1
-        }}>Roblox Downgrade</h3>
-
-        {/* Channel Selection */}
-        <div style={{ marginBottom: '16px', position: 'relative', zIndex: 1 }}>
-          <label style={{ 
-            display: 'block', 
-            marginBottom: '8px', 
-            color: theme.text, 
-            fontSize: '14px',
-            fontWeight: '500'
-          }}>
-            Channel:
-          </label>
-          <select
-            value={selectedChannel}
-            onChange={(e) => setSelectedChannel(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '10px',
-              borderRadius: '8px',
-              border: `1px solid ${primaryColor}33`,
-              background: theme.cardBg,
-              color: theme.text,
-              outline: 'none',
-              fontSize: '14px'
-            }}
-          >
-            {channels.map(channel => (
-              <option key={channel} value={channel}>{channel}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Binary Type Selection */}
-        <div style={{ marginBottom: '16px', position: 'relative', zIndex: 1 }}>
-          <label style={{ 
-            display: 'block', 
-            marginBottom: '8px', 
-            color: theme.text, 
-            fontSize: '14px',
-            fontWeight: '500'
-          }}>
-            Binary Type:
-          </label>
-          <select
-            value={selectedBinaryType}
-            onChange={(e) => setSelectedBinaryType(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '10px',
-              borderRadius: '8px',
-              border: `1px solid ${primaryColor}33`,
-              background: theme.cardBg,
-              color: theme.text,
-              outline: 'none',
-              fontSize: '14px'
-            }}
-          >
-            {binaryTypes.map(type => (
-              <option key={type.value} value={type.value}>{type.label}</option>
-            ))}
-          </select>
-        </div>
+        }}>Roblox Downgrade (Windows Player - LIVE Channel)</h3>
 
         {/* Saved Versions Dropdown */}
         {savedVersions.length > 0 && (
@@ -281,7 +209,7 @@ const Extra = () => {
             onChange={(e) => setRobloxVersion(e.target.value)}
             placeholder="Enter Roblox version hash"
             style={{
-              width: '100%',
+              width: 'calc(100% - 20px)',
               padding: '10px',
               borderRadius: '8px',
               border: `1px solid ${primaryColor}33`,
