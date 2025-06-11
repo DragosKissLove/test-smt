@@ -179,16 +179,70 @@ const Extra = () => {
                 color: theme.text,
                 outline: 'none',
                 fontSize: '14px',
-                maxHeight: '200px'
+                maxHeight: '200px',
+                // Fix for dropdown options
+                appearance: 'none',
+                WebkitAppearance: 'none',
+                MozAppearance: 'none'
               }}
             >
-              <option value="">Select a saved version...</option>
+              <option value="" style={{ 
+                background: theme.cardBg, 
+                color: theme.text 
+              }}>
+                Select a saved version...
+              </option>
               {savedVersions.map((version, index) => (
-                <option key={index} value={`${version.hash} – ${version.description}`}>
+                <option 
+                  key={index} 
+                  value={`${version.hash} – ${version.description}`}
+                  style={{ 
+                    background: theme.cardBg, 
+                    color: theme.text,
+                    padding: '8px'
+                  }}
+                >
                   {version.hash} – {version.description}
                 </option>
               ))}
             </select>
+            
+            {/* Custom dropdown styling */}
+            <style>
+              {`
+                select option {
+                  background: ${theme.cardBg} !important;
+                  color: ${theme.text} !important;
+                  padding: 8px !important;
+                }
+                
+                select option:hover {
+                  background: ${primaryColor}22 !important;
+                }
+                
+                select option:checked {
+                  background: ${primaryColor}44 !important;
+                }
+                
+                /* For WebKit browsers */
+                select::-webkit-scrollbar {
+                  width: 8px;
+                }
+                
+                select::-webkit-scrollbar-track {
+                  background: ${theme.cardBg};
+                }
+                
+                select::-webkit-scrollbar-thumb {
+                  background: ${primaryColor}66;
+                  border-radius: 4px;
+                }
+                
+                select::-webkit-scrollbar-thumb:hover {
+                  background: ${primaryColor};
+                }
+              `}
+            </style>
           </div>
         )}
 
