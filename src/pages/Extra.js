@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../ThemeContext';
-import { FiDownload, FiRefreshCw, FiClock } from 'react-icons/fi';
+import { FiDownload, FiRefreshCw, FiClock, FiChevronDown } from 'react-icons/fi';
 import { invoke } from '@tauri-apps/api/tauri';
 import { showNotification } from '../components/NotificationSystem';
 import { ring } from 'ldrs';
@@ -16,6 +16,8 @@ const Extra = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [savedVersions, setSavedVersions] = useState([]);
   const [activeButton, setActiveButton] = useState(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [selectedVersion, setSelectedVersion] = useState('');
 
   useEffect(() => {
     // Load saved versions from the API
@@ -76,14 +78,10 @@ const Extra = () => {
     }
   };
 
-  const handleVersionSelect = (event) => {
-    const selectedVersion = event.target.value;
-    if (selectedVersion) {
-      const version = savedVersions.find(v => `${v.hash} – ${v.description}` === selectedVersion);
-      if (version) {
-        setRobloxVersion(version.hash);
-      }
-    }
+  const handleVersionSelect = (version) => {
+    setRobloxVersion(version.hash);
+    setSelectedVersion(`${version.hash} – ${version.description}`);
+    setIsDropdownOpen(false);
   };
 
   return (
@@ -156,7 +154,7 @@ const Extra = () => {
           zIndex: 1
         }}>Roblox Downgrade (Windows Player - LIVE Channel)</h3>
 
-        {/* Saved Versions Dropdown */}
+        {/* Custom Saved Versions Dropdown */}
         {savedVersions.length > 0 && (
           <div style={{ marginBottom: '16px', position: 'relative', zIndex: 1 }}>
             <label style={{ 
@@ -168,81 +166,101 @@ const Extra = () => {
             }}>
               Saved Versions:
             </label>
-            <select
-              onChange={handleVersionSelect}
-              style={{
-                width: '100%',
-                padding: '10px',
-                borderRadius: '8px',
-                border: `1px solid ${primaryColor}33`,
-                background: theme.cardBg,
-                color: theme.text,
-                outline: 'none',
-                fontSize: '14px',
-                maxHeight: '200px',
-                // Fix for dropdown options
-                appearance: 'none',
-                WebkitAppearance: 'none',
-                MozAppearance: 'none'
-              }}
-            >
-              <option value="" style={{ 
-                background: theme.cardBg, 
-                color: theme.text 
-              }}>
-                Select a saved version...
-              </option>
-              {savedVersions.map((version, index) => (
-                <option 
-                  key={index} 
-                  value={`${version.hash} – ${version.description}`}
-                  style={{ 
-                    background: theme.cardBg, 
-                    color: theme.text,
-                    padding: '8px'
-                  }}
+            <div style={{ position: 'relative' }}>
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  borderRadius: '12px',
+                  border: `1px solid ${primaryColor}33`,
+                  background: `linear-gradient(135deg, ${theme.cardBg}, ${primaryColor}08)`,
+                  color: theme.text,
+                  outline: 'none',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  transition: 'all 0.3s ease',
+                  boxShadow: `0 4px 16px ${primaryColor}22`
+                }}
+              >
+                <span style={{ opacity: selectedVersion ? 1 : 0.7 }}>
+                  {selectedVersion || 'Select a saved version...'}
+                </span>
+                <motion.div
+                  animate={{ rotate: isDropdownOpen ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
                 >
-                  {version.hash} – {version.description}
-                </option>
-              ))}
-            </select>
-            
-            {/* Custom dropdown styling */}
-            <style>
-              {`
-                select option {
-                  background: ${theme.cardBg} !important;
-                  color: ${theme.text} !important;
-                  padding: 8px !important;
-                }
-                
-                select option:hover {
-                  background: ${primaryColor}22 !important;
-                }
-                
-                select option:checked {
-                  background: ${primaryColor}44 !important;
-                }
-                
-                /* For WebKit browsers */
-                select::-webkit-scrollbar {
-                  width: 8px;
-                }
-                
-                select::-webkit-scrollbar-track {
-                  background: ${theme.cardBg};
-                }
-                
-                select::-webkit-scrollbar-thumb {
-                  background: ${primaryColor}66;
-                  border-radius: 4px;
-                }
-                
-                select::-webkit-scrollbar-thumb:hover {
-                  background: ${primaryColor};
-                }
-              `}
-            </style>
+                  <FiChevronDown size={16} color={primaryColor} />
+                </motion.div>
+              </motion.button>
+
+              <AnimatePresence>
+                {isDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      marginTop: '4px',
+                      background: `linear-gradient(135deg, ${theme.cardBg}, ${primaryColor}08)`,
+                      border: `1px solid ${primaryColor}33`,
+                      borderRadius: '12px',
+                      boxShadow: `0 8px 32px ${primaryColor}44`,
+                      backdropFilter: 'blur(20px)',
+                      WebkitBackdropFilter: 'blur(20px)',
+                      maxHeight: '200px',
+                      overflowY: 'auto',
+                      zIndex: 1000
+                    }}
+                  >
+                    {savedVersions.map((version, index) => (
+                      <motion.button
+                        key={index}
+                        whileHover={{ 
+                          backgroundColor: `${primaryColor}22`,
+                          x: 4
+                        }}
+                        onClick={() => handleVersionSelect(version)}
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          border: 'none',
+                          background: 'transparent',
+                          color: theme.text,
+                          fontSize: '14px',
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          borderRadius: index === 0 ? '12px 12px 0 0' : index === savedVersions.length - 1 ? '0 0 12px 12px' : '0',
+                          transition: 'all 0.2s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}
+                      >
+                        <div style={{
+                          width: '6px',
+                          height: '6px',
+                          borderRadius: '50%',
+                          background: primaryColor,
+                          opacity: 0.6
+                        }} />
+                        {version.hash} – {version.description}
+                      </motion.button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         )}
 
@@ -264,13 +282,15 @@ const Extra = () => {
             placeholder="Enter Roblox version hash"
             style={{
               width: 'calc(100% - 20px)',
-              padding: '10px',
-              borderRadius: '8px',
+              padding: '12px',
+              borderRadius: '12px',
               border: `1px solid ${primaryColor}33`,
-              background: theme.cardBg,
+              background: `linear-gradient(135deg, ${theme.cardBg}, ${primaryColor}08)`,
               color: theme.text,
               outline: 'none',
-              fontSize: '14px'
+              fontSize: '14px',
+              transition: 'all 0.3s ease',
+              boxShadow: `0 4px 16px ${primaryColor}22`
             }}
           />
         </div>
