@@ -116,11 +116,13 @@ const App = () => {
           position: 'fixed',
           top: 0,
           left: 0,
-          right: 0,
-          height: '32px',
+          right: 120,
+          height: '40px',
           WebkitAppRegion: 'drag',
-          zIndex: 1000
+          zIndex: 1000,
+          // background: 'rgba(255, 0, 0, 0.1)' // Decomentează pentru a vedea zona
         }}
+        onDoubleClick={() => appWindow.toggleMaximize()}
       />
       <div style={{
         position: 'fixed',
@@ -182,7 +184,7 @@ const App = () => {
       
       <Sidebar active={activeTab} onChange={setActiveTab} user={user} />
       {renderContent()}
-      <NotificationSystem />
+      <NotificationSystem /> 
     </div>
   );
 };
