@@ -24,11 +24,10 @@ const Settings = () => {
   const [username, setUsername] = useState('User');
   const [activeSection, setActiveSection] = useState('appearance');
   const [systemInfo, setSystemInfo] = useState({
+    os: 'Loading...',
     cpu: 'Loading...',
     ram: 'Loading...',
-    gpu: 'Loading...',
-    os: 'Loading...',
-    storage: 'Loading...'
+    gpu: 'Loading...'
   });
 
   useEffect(() => {
@@ -40,66 +39,20 @@ const Settings = () => {
     const getSystemInfo = async () => {
       try {
         // Get username
-        const result = await invoke('get_username');
-        setUsername(result || 'User');
+        const usernameResult = await invoke('get_username');
+        setUsername(usernameResult || 'User');
         
-        // Get system information using Windows commands
-        const newSystemInfo = { ...systemInfo };
-
-        // Get OS information
-        try {
-          const osResult = await invoke('run_function', { 
-            name: 'get_system_info', 
-            args: 'os' 
-          });
-          newSystemInfo.os = osResult || 'Windows 11';
-        } catch (e) {
-          newSystemInfo.os = 'Windows 11';
-        }
-
-        // Get CPU information
-        try {
-          const cpuResult = await invoke('run_function', { 
-            name: 'get_system_info', 
-            args: 'cpu' 
-          });
-          newSystemInfo.cpu = cpuResult || 'Intel/AMD Processor';
-        } catch (e) {
-          newSystemInfo.cpu = 'Intel/AMD Processor';
-        }
-
-        // Get RAM information
-        try {
-          const ramResult = await invoke('run_function', { 
-            name: 'get_system_info', 
-            args: 'ram' 
-          });
-          newSystemInfo.ram = ramResult || '16 GB RAM • 512 GB SSD';
-        } catch (e) {
-          newSystemInfo.ram = '16 GB RAM • 512 GB SSD';
-        }
-
-        // Get GPU information
-        try {
-          const gpuResult = await invoke('run_function', { 
-            name: 'get_system_info', 
-            args: 'gpu' 
-          });
-          newSystemInfo.gpu = gpuResult || 'NVIDIA/AMD Graphics';
-        } catch (e) {
-          newSystemInfo.gpu = 'NVIDIA/AMD Graphics';
-        }
-
-        setSystemInfo(newSystemInfo);
+        // Get real system information
+        const sysInfo = await invoke('get_system_info');
+        setSystemInfo(sysInfo);
       } catch (error) {
         console.error('Error getting system info:', error);
-        // Set default values if everything fails
+        // Set fallback values if everything fails
         setSystemInfo({
           os: 'Windows 11',
           cpu: 'Intel/AMD Processor',
-          ram: '16 GB RAM • 512 GB SSD',
-          gpu: 'NVIDIA/AMD Graphics',
-          storage: 'Available'
+          ram: '16 GB RAM',
+          gpu: 'NVIDIA/AMD Graphics'
         });
       }
     };
@@ -123,7 +76,7 @@ const Settings = () => {
       setUpdateStatus('Checking for updates...');
       showNotification('info', 'Update Check', 'Checking for updates...');
       
-      // Simulate update check since the command doesn't exist
+      // Simulate update check
       setTimeout(() => {
         setUpdateStatus('You have the latest version!');
         showNotification('success', 'Up to Date', 'You have the latest version!');
@@ -773,7 +726,7 @@ const Settings = () => {
                       color: `${theme.text}60`,
                       margin: 0
                     }}>
-                      Hardware and software details
+                      Real-time hardware and software details
                     </p>
                   </div>
                 </div>
@@ -834,7 +787,8 @@ const Settings = () => {
                       <p style={{
                         fontSize: '14px',
                         color: theme.text,
-                        margin: 0
+                        margin: 0,
+                        wordBreak: 'break-word'
                       }}>
                         {systemInfo.cpu}
                       </p>
@@ -858,7 +812,7 @@ const Settings = () => {
                         color: primaryColor,
                         margin: '0 0 4px 0'
                       }}>
-                        Memory & Storage
+                        Memory
                       </h4>
                       <p style={{
                         fontSize: '14px',
@@ -892,7 +846,8 @@ const Settings = () => {
                       <p style={{
                         fontSize: '14px',
                         color: theme.text,
-                        margin: 0
+                        margin: 0,
+                        wordBreak: 'break-word'
                       }}>
                         {systemInfo.gpu}
                       </p>

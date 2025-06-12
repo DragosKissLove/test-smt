@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../ThemeContext';
-import { FiDownload, FiRefreshCw, FiClock, FiChevronDown } from 'react-icons/fi';
+import { FiDownload, FiRefreshCw, FiClock, FiChevronDown, FiList } from 'react-icons/fi';
 import { invoke } from '@tauri-apps/api/tauri';
 import { showNotification } from '../components/NotificationSystem';
 import { ring } from 'ldrs';
@@ -16,8 +16,7 @@ const Extra = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [savedVersions, setSavedVersions] = useState([]);
   const [activeButton, setActiveButton] = useState(null);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [selectedVersion, setSelectedVersion] = useState('');
+  const [showVersionsList, setShowVersionsList] = useState(false);
 
   useEffect(() => {
     // Load saved versions from the API
@@ -80,8 +79,7 @@ const Extra = () => {
 
   const handleVersionSelect = (version) => {
     setRobloxVersion(version.hash);
-    setSelectedVersion(`${version.hash} – ${version.description}`);
-    setIsDropdownOpen(false);
+    setShowVersionsList(false);
   };
 
   return (
@@ -154,93 +152,93 @@ const Extra = () => {
           zIndex: 1
         }}>Roblox Downgrade (Windows Player - LIVE Channel)</h3>
 
-        {/* Custom Saved Versions Dropdown */}
+        {/* Compact Saved Versions Section */}
         {savedVersions.length > 0 && (
           <div style={{ marginBottom: '16px', position: 'relative', zIndex: 1 }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '8px', 
-              color: theme.text, 
-              fontSize: '14px',
-              fontWeight: '500'
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              marginBottom: '8px'
             }}>
-              Saved Versions:
-            </label>
-            <div style={{ position: 'relative' }}>
+              <label style={{ 
+                color: theme.text, 
+                fontSize: '14px',
+                fontWeight: '500'
+              }}>
+                Quick Select:
+              </label>
               <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowVersionsList(!showVersionsList)}
                 style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  borderRadius: '12px',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
                   border: `1px solid ${primaryColor}33`,
                   background: `linear-gradient(135deg, ${theme.cardBg}, ${primaryColor}08)`,
-                  color: theme.text,
-                  outline: 'none',
-                  fontSize: '14px',
+                  color: primaryColor,
+                  fontSize: '13px',
+                  fontWeight: '500',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
-                  transition: 'all 0.3s ease',
-                  boxShadow: `0 4px 16px ${primaryColor}22`
+                  gap: '8px',
+                  transition: 'all 0.3s ease'
                 }}
               >
-                <span style={{ opacity: selectedVersion ? 1 : 0.7 }}>
-                  {selectedVersion || 'Select a saved version...'}
-                </span>
+                <FiList size={14} />
+                Browse Versions
                 <motion.div
-                  animate={{ rotate: isDropdownOpen ? 180 : 0 }}
+                  animate={{ rotate: showVersionsList ? 180 : 0 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <FiChevronDown size={16} color={primaryColor} />
+                  <FiChevronDown size={12} />
                 </motion.div>
               </motion.button>
+            </div>
 
-              <AnimatePresence>
-                {isDropdownOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
-                    style={{
-                      position: 'absolute',
-                      top: '100%',
-                      left: 0,
-                      right: 0,
-                      marginTop: '4px',
-                      background: `linear-gradient(135deg, ${theme.cardBg}, ${primaryColor}08)`,
-                      border: `1px solid ${primaryColor}33`,
-                      borderRadius: '12px',
-                      boxShadow: `0 8px 32px ${primaryColor}44`,
-                      backdropFilter: 'blur(20px)',
-                      WebkitBackdropFilter: 'blur(20px)',
-                      maxHeight: '200px',
-                      overflowY: 'auto',
-                      zIndex: 1000
-                    }}
-                  >
-                    {savedVersions.map((version, index) => (
+            <AnimatePresence>
+              {showVersionsList && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  style={{
+                    background: `linear-gradient(135deg, ${theme.cardBg}, ${primaryColor}05)`,
+                    border: `1px solid ${primaryColor}22`,
+                    borderRadius: '12px',
+                    padding: '12px',
+                    marginBottom: '16px',
+                    maxHeight: '200px',
+                    overflowY: 'auto'
+                  }}
+                >
+                  <div style={{
+                    display: 'grid',
+                    gap: '8px'
+                  }}>
+                    {savedVersions.slice(0, 8).map((version, index) => (
                       <motion.button
                         key={index}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
                         whileHover={{ 
-                          backgroundColor: `${primaryColor}22`,
+                          backgroundColor: `${primaryColor}15`,
                           x: 4
                         }}
                         onClick={() => handleVersionSelect(version)}
                         style={{
-                          width: '100%',
-                          padding: '12px 16px',
+                          padding: '10px 12px',
                           border: 'none',
                           background: 'transparent',
                           color: theme.text,
-                          fontSize: '14px',
+                          fontSize: '12px',
                           textAlign: 'left',
                           cursor: 'pointer',
-                          borderRadius: index === 0 ? '12px 12px 0 0' : index === savedVersions.length - 1 ? '0 0 12px 12px' : '0',
+                          borderRadius: '8px',
                           transition: 'all 0.2s ease',
                           display: 'flex',
                           alignItems: 'center',
@@ -248,19 +246,39 @@ const Extra = () => {
                         }}
                       >
                         <div style={{
-                          width: '6px',
-                          height: '6px',
+                          width: '4px',
+                          height: '4px',
                           borderRadius: '50%',
                           background: primaryColor,
                           opacity: 0.6
                         }} />
-                        {version.hash} – {version.description}
+                        <span style={{ 
+                          fontFamily: 'monospace',
+                          color: primaryColor,
+                          fontWeight: '600'
+                        }}>
+                          {version.hash}
+                        </span>
+                        <span style={{ opacity: 0.7 }}>
+                          – {version.description}
+                        </span>
                       </motion.button>
                     ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                    {savedVersions.length > 8 && (
+                      <div style={{
+                        padding: '8px 12px',
+                        fontSize: '11px',
+                        color: `${theme.text}60`,
+                        textAlign: 'center',
+                        fontStyle: 'italic'
+                      }}>
+                        +{savedVersions.length - 8} more versions available
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
 
@@ -279,7 +297,7 @@ const Extra = () => {
             type="text"
             value={robloxVersion}
             onChange={(e) => setRobloxVersion(e.target.value)}
-            placeholder="Enter Roblox version hash"
+            placeholder="Enter Roblox version hash (e.g., e1da58b32b1c4d64)"
             style={{
               width: 'calc(100% - 20px)',
               padding: '12px',

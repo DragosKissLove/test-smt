@@ -18,6 +18,108 @@ struct VersionInfo {
     description: String,
 }
 
+#[derive(serde::Serialize)]
+struct SystemInfo {
+    os: String,
+    cpu: String,
+    ram: String,
+    gpu: String,
+}
+
+#[tauri::command]
+async fn get_system_info() -> Result<SystemInfo, String> {
+    let mut system_info = SystemInfo {
+        os: "Windows 11".to_string(),
+        cpu: "Unknown Processor".to_string(),
+        ram: "Memory information unavailable".to_string(),
+        gpu: "Graphics information unavailable".to_string(),
+    };
+
+    // Get OS information
+    match Command::new("cmd")
+        .args(&["/C", "ver"])
+        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+        .output()
+    {
+        Ok(output) => {
+            let os_output = String::from_utf8_lossy(&output.stdout);
+            if os_output.contains("10.0") {
+                if os_output.contains("22000") || os_output.contains("22621") || os_output.contains("22631") {
+                    system_info.os = "Windows 11".to_string();
+                } else {
+                    system_info.os = "Windows 10".to_string();
+                }
+            }
+        }
+        Err(_) => {}
+    }
+
+    // Get CPU information
+    match Command::new("wmic")
+        .args(&["cpu", "get", "name", "/format:value"])
+        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+        .output()
+    {
+        Ok(output) => {
+            let cpu_output = String::from_utf8_lossy(&output.stdout);
+            for line in cpu_output.lines() {
+                if line.starts_with("Name=") && line.len() > 5 {
+                    let cpu_name = line[5..].trim();
+                    if !cpu_name.is_empty() {
+                        system_info.cpu = cpu_name.to_string();
+                        break;
+                    }
+                }
+            }
+        }
+        Err(_) => {}
+    }
+
+    // Get RAM information
+    match Command::new("wmic")
+        .args(&["computersystem", "get", "TotalPhysicalMemory", "/format:value"])
+        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+        .output()
+    {
+        Ok(output) => {
+            let ram_output = String::from_utf8_lossy(&output.stdout);
+            for line in ram_output.lines() {
+                if line.starts_with("TotalPhysicalMemory=") {
+                    if let Ok(bytes) = line[20..].trim().parse::<u64>() {
+                        let gb = bytes / (1024 * 1024 * 1024);
+                        system_info.ram = format!("{} GB RAM", gb);
+                        break;
+                    }
+                }
+            }
+        }
+        Err(_) => {}
+    }
+
+    // Get GPU information
+    match Command::new("wmic")
+        .args(&["path", "win32_VideoController", "get", "name", "/format:value"])
+        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+        .output()
+    {
+        Ok(output) => {
+            let gpu_output = String::from_utf8_lossy(&output.stdout);
+            for line in gpu_output.lines() {
+                if line.starts_with("Name=") && line.len() > 5 {
+                    let gpu_name = line[5..].trim();
+                    if !gpu_name.is_empty() && !gpu_name.contains("Microsoft") {
+                        system_info.gpu = gpu_name.to_string();
+                        break;
+                    }
+                }
+            }
+        }
+        Err(_) => {}
+    }
+
+    Ok(system_info)
+}
+
 #[tauri::command]
 async fn download_player(
     app_handle: tauri::AppHandle,
@@ -639,7 +741,8 @@ fn main() {
             download_app,
             download_to_desktop_and_run,
             get_username,
-            run_function
+            run_function,
+            get_system_info
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
